@@ -37,14 +37,15 @@ class DetectedObject(models.Model):
     prediction = models.CharField(max_length=100)  # Nama kelas prediksi
     class_id = models.IntegerField()  # ID kelas
     confidence = models.FloatField()  # Confidence score
+    detection_type = models.CharField(max_length=20, choices=[('segmentation', 'Segmentation'), ('detection', 'Object Detection')], default='segmentation')
     
-    # Segmentation data
-    segmentation_area_pixels = models.IntegerField()
-    segmentation_area_percentage = models.FloatField()
-    segmentation_polygons = models.JSONField()  # Array of polygon coordinates
-    segmentation_bounding_coordinates = models.JSONField()  # [x1, y1, x2, y2]
-    segmentation_yolo_format = models.JSONField()  # [class_id, x_center, y_center, width, height]
-    segmentation_size = models.JSONField()  # [width, height]
+    # Segmentation data (nullable for object detection)
+    segmentation_area_pixels = models.IntegerField(null=True, blank=True)
+    segmentation_area_percentage = models.FloatField(null=True, blank=True)
+    segmentation_polygons = models.JSONField(null=True, blank=True)  # Array of polygon coordinates
+    segmentation_bounding_coordinates = models.JSONField(null=True, blank=True)  # [x1, y1, x2, y2]
+    segmentation_yolo_format = models.JSONField(null=True, blank=True)  # [class_id, x_center, y_center, width, height]
+    segmentation_size = models.JSONField(null=True, blank=True)  # [width, height]
     
     # Bounding box data
     bbox_area_pixels = models.IntegerField()
@@ -53,8 +54,8 @@ class DetectedObject(models.Model):
     bbox_yolo_format = models.JSONField()  # [class_id, x_center, y_center, width, height]
     bbox_size = models.JSONField()  # [width, height]
     
-    # Ratio
-    segmentation_bbox_ratio = models.FloatField()
+    # Ratio (nullable for object detection)
+    segmentation_bbox_ratio = models.FloatField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     

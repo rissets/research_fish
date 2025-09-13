@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified YOLO WebSocket Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .mode-selector {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mode-btn {
+            padding: 12px 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .status-connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-disconnected {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .video-section {
+            text-align: center;
+        }
+
+        .video-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        #videoElement {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: cover;
+            display: block;
+        }
+
+        #overlayCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .results-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .detection-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .detection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .prediction-name {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .confidence-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .detection-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .coordinates {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .websocket-status {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .processing-indicator {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-buttons {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐠 Unified Fish Detection System</h1>
+            <p>Real-time Segmentation & Object Detection with YOLO</p>
+        </div>
+
+        <div class="mode-selector">
+            <div class="mode-buttons">
+                <span style="font-weight: bold; margin-right: 15px;">Detection Mode:</span>
+                <button class="mode-btn active" data-mode="segmentation">
+                    🎯 Segmentation
+                </button>
+                <button class="mode-btn" data-mode="detection">
+                    📦 Object Detection
+                </button>
+                <div class="status-indicator status-disconnected" id="connectionStatus"></div>
+                <span id="connectionText">Disconnected</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="videoElement" autoplay muted playsinline>
+                        Your browser does not support the video tag.
+                    </video>
+                    <canvas id="overlayCanvas"></canvas>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="startCameraBtn">
+                        📹 Start Camera
+                    </button>
+                    <button class="btn btn-secondary" id="connectBtn" disabled>
+                        🔌 Connect WebSocket
+                    </button>
+                    <button class="btn btn-success" id="startPredictionBtn" disabled>
+                        🚀 Start Detection
+                    </button>
+                    <button class="btn btn-danger" id="stopPredictionBtn" disabled>
+                        ⏹️ Stop Detection
+                    </button>
+                </div>
+
+                <div class="processing-indicator" id="processingIndicator">
+                    <div class="spinner"></div>
+                    Processing frame...
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3 id="resultsTitle">🔍 Detection Results</h3>
+                
+                <div class="websocket-status" id="websocketStatus">
+                    <strong>WebSocket Status:</strong> <span id="wsStatusText">Not connected</span><br>
+                    <strong>Current Mode:</strong> <span id="currentModeText">Segmentation</span><br>
+                    <strong>Session ID:</strong> <span id="sessionIdText">None</span>
+                </div>
+
+                <div id="detectionResults">
+                    <p style="text-align: center; color: #6c757d; padding: 20px;">
+                        Start camera and begin detection to see results here...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class UnifiedFishDetectionSystem {
+            constructor() {
+                this.socket = null;
+                this.video = document.getElementById('videoElement');
+                this.canvas = document.getElementById('overlayCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.isConnected = false;
+                this.isPredicting = false;
+                this.sessionId = null;
+                this.currentMode = 'segmentation';
+                
+                this.initializeElements();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.startCameraBtn = document.getElementById('startCameraBtn');
+                this.connectBtn = document.getElementById('connectBtn');
+                this.startPredictionBtn = document.getElementById('startPredictionBtn');
+                this.stopPredictionBtn = document.getElementById('stopPredictionBtn');
+                this.connectionStatus = document.getElementById('connectionStatus');
+                this.connectionText = document.getElementById('connectionText');
+                this.processingIndicator = document.getElementById('processingIndicator');
+                this.detectionResults = document.getElementById('detectionResults');
+                this.wsStatusText = document.getElementById('wsStatusText');
+                this.currentModeText = document.getElementById('currentModeText');
+                this.sessionIdText = document.getElementById('sessionIdText');
+                this.resultsTitle = document.getElementById('resultsTitle');
+                this.modeButtons = document.querySelectorAll('.mode-btn');
+            }
+
+            setupEventListeners() {
+                this.startCameraBtn.addEventListener('click', () => this.startCamera());
+                this.connectBtn.addEventListener('click', () => this.connectWebSocket());
+                this.startPredictionBtn.addEventListener('click', () => this.startPrediction());
+                this.stopPredictionBtn.addEventListener('click', () => this.stopPrediction());
+                
+                // Mode selection
+                this.modeButtons.forEach(btn => {
+                    btn.addEventListener('click', () => this.changeMode(btn.dataset.mode));
+                });
+
+                // Video events
+                this.video.addEventListener('loadedmetadata', () => this.resizeCanvas());
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+
+            async startCamera() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 640, height: 480 }
+                    });
+                    this.video.srcObject = stream;
+                    
+                    this.startCameraBtn.disabled = true;
+                    this.connectBtn.disabled = false;
+                    
+                    this.showMessage('Camera started successfully!', 'success');
+                } catch (error) {
+                    this.showMessage(`Camera error: ${error.message}`, 'error');
+                }
+            }
+
+            connectWebSocket() {
+                this.sessionId = this.generateSessionId();
+                const wsUrl = `ws://localhost:8000/ws/unified/${this.sessionId}/`;
+                
+                this.socket = new WebSocket(wsUrl);
+                
+                this.socket.onopen = () => {
+                    this.isConnected = true;
+                    this.updateConnectionStatus(true);
+                    this.connectBtn.disabled = true;
+                    this.startPredictionBtn.disabled = false;
+                    this.showMessage('WebSocket connected!', 'success');
+                };
+                
+                this.socket.onmessage = (event) => {
+                    this.handleWebSocketMessage(JSON.parse(event.data));
+                };
+                
+                this.socket.onerror = (error) => {
+                    this.showMessage(`WebSocket error: ${error}`, 'error');
+                };
+                
+                this.socket.onclose = () => {
+                    this.isConnected = false;
+                    this.updateConnectionStatus(false);
+                    this.connectBtn.disabled = false;
+                    this.startPredictionBtn.disabled = true;
+                    this.stopPredictionBtn.disabled = true;
+                    this.showMessage('WebSocket disconnected', 'error');
+                };
+            }
+
+            changeMode(newMode) {
+                if (this.isPredicting) {
+                    this.showMessage('Stop detection before changing mode', 'error');
+                    return;
+                }
+
+                this.currentMode = newMode;
+                
+                // Update UI
+                this.modeButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === newMode);
+                });
+                
+                this.currentModeText.textContent = newMode.charAt(0).toUpperCase() + newMode.slice(1);
+                this.resultsTitle.textContent = newMode === 'segmentation' ? '🎯 Segmentation Results' : '📦 Object Detection Results';
+                
+                // Send mode change to server if connected
+                if (this.isConnected) {
+                    this.socket.send(JSON.stringify({
+                        type: 'change_mode',
+                        mode: newMode
+                    }));
+                }
+                
+                this.showMessage(`Switched to ${newMode} mode`, 'success');
+            }
+
+            startPrediction() {
+                if (!this.isConnected) {
+                    this.showMessage('Connect WebSocket first!', 'error');
+                    return;
+                }
+                
+                this.isPredicting = true;
+                this.startPredictionBtn.disabled = true;
+                this.stopPredictionBtn.disabled = false;
+                
+                // Disable mode switching during prediction
+                this.modeButtons.forEach(btn => btn.disabled = true);
+                
+                this.predictionInterval = setInterval(() => {
+                    this.captureAndPredict();
+                }, 1000); // Predict every second
+                
+                this.showMessage('Detection started!', 'success');
+            }
+
+            stopPrediction() {
+                this.isPredicting = false;
+                this.startPredictionBtn.disabled = false;
+                this.stopPredictionBtn.disabled = true;
+                
+                // Re-enable mode switching
+                this.modeButtons.forEach(btn => btn.disabled = false);
+                
+                if (this.predictionInterval) {
+                    clearInterval(this.predictionInterval);
+                }
+                
+                this.processingIndicator.style.display = 'none';
+                this.showMessage('Detection stopped', 'success');
+            }
+
+            captureAndPredict() {
+                if (!this.isPredicting || !this.isConnected) return;
+                
+                this.processingIndicator.style.display = 'block';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = this.video.videoWidth;
+                canvas.height = this.video.videoHeight;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(this.video, 0, 0);
+                
+                const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+                
+                this.socket.send(JSON.stringify({
+                    type: 'predict_frame',
+                    image: base64Image
+                }));
+            }
+
+            handleWebSocketMessage(data) {
+                console.log('Received:', data);
+                
+                switch (data.type) {
+                    case 'connection_established':
+                        this.sessionId = data.session_id;
+                        this.sessionIdText.textContent = this.sessionId;
+                        this.currentMode = data.current_mode;
+                        this.currentModeText.textContent = this.currentMode.charAt(0).toUpperCase() + this.currentMode.slice(1);
+                        break;
+                        
+                    case 'mode_changed':
+                        this.showMessage(data.message, 'success');
+                        break;
+                        
+                    case 'prediction_result':
+                        this.processingIndicator.style.display = 'none';
+                        this.displayResults(data);
+                        this.drawDetections(data);
+                        break;
+                        
+                    case 'error':
+                        this.processingIndicator.style.display = 'none';
+                        this.showMessage(data.message, 'error');
+                        break;
+                        
+                    case 'pong':
+                        // Handle ping response
+                        break;
+                }
+            }
+
+            displayResults(data) {
+                const result = data.result;
+                const mode = data.mode;
+                
+                let html = '';
+                
+                if (mode === 'segmentation' && result.detections && result.detections.length > 0) {
+                    result.detections.forEach((detection, index) => {
+                        html += this.createDetectionHTML(detection, 'segmentation');
+                    });
+                } else if (mode === 'detection' && result.detection) {
+                    html += this.createDetectionHTML(result.detection, 'detection');
+                } else {
+                    html = '<p style="text-align: center; color: #6c757d;">No objects detected in this frame</p>';
+                }
+                
+                this.detectionResults.innerHTML = html;
+            }
+
+            createDetectionHTML(detection, mode) {
+                const coords = mode === 'segmentation' 
+                    ? detection.segmentation.bounding_coordinates_pixel 
+                    : detection.bounding_box.coordinates_pixel;
+                
+                const area = mode === 'segmentation' 
+                    ? detection.segmentation.area_pixels 
+                    : detection.bounding_box.area_pixels;
+                
+                return `
+                    <div class="detection-item">
+                        <div class="detection-header">
+                            <span class="prediction-name">${detection.prediction}</span>
+                            <span class="confidence-badge">${(detection.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="detection-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Type:</span> ${mode === 'segmentation' ? 'Segmentation' : 'Object Detection'}
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Coordinates:</span> 
+                                <span class="coordinates">[${coords.map(c => Math.round(c)).join(', ')}]</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Area:</span> ${area.toLocaleString()} pixels
+                            </div>
+                            ${mode === 'segmentation' ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Seg/Box Ratio:</span> ${detection.segmentation_bbox_ratio.toFixed(1)}%
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            drawDetections(data) {
+                this.clearCanvas();
+                
+                const result = data.result;
+                const mode = data.mode;
+                
+                if (mode === 'segmentation' && result.detections) {
+                    result.detections.forEach(detection => {
+                        this.drawBoundingBox(detection.segmentation.bounding_coordinates_pixel, detection.prediction, detection.confidence, '#ff0000');
+                    });
+                } else if (mode === 'detection' && result.detection) {
+                    this.drawBoundingBox(result.detection.bounding_box.coordinates_pixel, result.detection.prediction, result.detection.confidence, '#00ff00');
+                }
+            }
+
+            drawBoundingBox(coords, prediction, confidence, color) {
+                const [x1, y1, x2, y2] = coords;
+                const scaleX = this.canvas.width / this.video.videoWidth;
+                const scaleY = this.canvas.height / this.video.videoHeight;
+                
+                const scaledX1 = x1 * scaleX;
+                const scaledY1 = y1 * scaleY;
+                const scaledX2 = x2 * scaleX;
+                const scaledY2 = y2 * scaleY;
+                
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(scaledX1, scaledY1, scaledX2 - scaledX1, scaledY2 - scaledY1);
+                
+                this.ctx.fillStyle = color;
+                this.ctx.font = '16px Arial';
+                const text = `${prediction} (${(confidence * 100).toFixed(1)}%)`;
+                this.ctx.fillText(text, scaledX1, scaledY1 - 5);
+            }
+
+            clearCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+
+            resizeCanvas() {
+                if (this.video.videoWidth && this.video.videoHeight) {
+                    this.canvas.width = this.video.clientWidth;
+                    this.canvas.height = this.video.clientHeight;
+                }
+            }
+
+            updateConnectionStatus(connected) {
+                if (connected) {
+                    this.connectionStatus.className = 'status-indicator status-connected';
+                    this.connectionText.textContent = 'Connected';
+                    this.wsStatusText.textContent = 'Connected';
+                } else {
+                    this.connectionStatus.className = 'status-indicator status-disconnected';
+                    this.connectionText.textContent = 'Disconnected';
+                    this.wsStatusText.textContent = 'Disconnected';
+                    this.sessionIdText.textContent = 'None';
+                }
+            }
+
+            showMessage(message, type) {
+                const className = type === 'error' ? 'error-message' : 'success-message';
+                const messageDiv = document.createElement('div');
+                messageDiv.className = className;
+                messageDiv.textContent = message;
+                
+                this.detectionResults.insertBefore(messageDiv, this.detectionResults.firstChild);
+                
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 3000);
+            }
+
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+        }
+
+        // Initialize the system when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new UnifiedFishDetectionSystem();
+        });
+    </script>
+</body>
+</html>

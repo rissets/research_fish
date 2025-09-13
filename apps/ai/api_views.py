@@ -10,7 +10,7 @@ from .serializers import (
     DetectionSessionSerializer, DetectionSerializer, 
     DetectedObjectSerializer, DetectionSessionCreateSerializer
 )
-from .services import YOLOSegmentationService
+from .services import YOLOSegmentationService, YOLOObjectDetectionService
 import base64
 import json
 
@@ -203,6 +203,103 @@ class PredictionAPIView(APIView):
                 'model_loaded': self.yolo_service.model is not None,
                 'model_type': 'YOLOv8n-seg',
                 'classes': list(self.yolo_service.model.names.values()) if self.yolo_service.model else []
+            })
+        except Exception as e:
+            return Response({
+                'error': f'Error getting model info: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ObjectDetectionAPIView(APIView):
+    """API untuk melakukan prediksi object detection (single object) secara langsung"""
+    permission_classes = [AllowAny]
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.yolo_service = YOLOObjectDetectionService()
+    
+    def post(self, request):
+        """Prediksi object detection dari base64 image"""
+        try:
+            base64_image = request.data.get('image')
+            save_to_db = request.data.get('save_to_db', True)
+            session_id = request.data.get('session_id', None)
+            
+            if not base64_image:
+                return Response({
+                    'error': 'No image data provided'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Perform prediction
+            result = self.yolo_service.predict_single_object(base64_image)
+            
+            if result is None:
+                return Response({
+                    'error': 'Failed to process image'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Save to database if requested and detection exists
+            if save_to_db and result.get('detection'):
+                if session_id:
+                    try:
+                        session = DetectionSession.objects.get(session_id=session_id)
+                    except DetectionSession.DoesNotExist:
+                        session = DetectionSession.objects.create(session_id=session_id)
+                else:
+                    import uuid
+                    session = DetectionSession.objects.create(
+                        session_id=str(uuid.uuid4())
+                    )
+                
+                # Create detection record
+                detection = Detection.objects.create(
+                    session=session,
+                    frame_number=result['frame_number'],
+                    frame_width=result['frame_size'][0],
+                    frame_height=result['frame_size'][1]
+                )
+                
+                # Save detected object
+                obj_data = result['detection']
+                DetectedObject.objects.create(
+                    detection=detection,
+                    object_id=obj_data['object_id'],
+                    prediction=obj_data['prediction'],
+                    class_id=obj_data['class_id'],
+                    confidence=obj_data['confidence'],
+                    detection_type='detection',
+                    
+                    # Bounding box data
+                    bbox_area_pixels=obj_data['bounding_box']['area_pixels'],
+                    bbox_area_percentage=obj_data['bounding_box']['area_percentage'],
+                    bbox_coordinates=obj_data['bounding_box']['coordinates_pixel'],
+                    bbox_yolo_format=obj_data['bounding_box']['yolo_format'],
+                    bbox_size=obj_data['bounding_box']['size_pixels']
+                )
+                
+                result['detection_id'] = detection.id
+                result['session_id'] = session.session_id
+            
+            return Response({
+                'success': True,
+                'result': result
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Object detection error: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def model_info(self, request):
+        """Get information about the object detection YOLO model"""
+        try:
+            return Response({
+                'model_loaded': self.yolo_service.model is not None,
+                'model_type': 'YOLOv8n Detection (Custom Trained)',
+                'model_path': 'training_results/fish_detection_20250913_160827/weights/best.pt',
+                'classes': list(self.yolo_service.model.names.values()) if self.yolo_service.model else [],
+                'task': 'single_object_detection'
             })
         except Exception as e:
             return Response({

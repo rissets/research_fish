@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Detection API - Integration Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: #2980b9;
+            background-color: #f8f9fa;
+        }
+        
+        .upload-area.dragover {
+            border-color: #27ae60;
+            background-color: #d5f4e6;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #ecf0f1;
+        }
+        
+        .detection-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .confidence {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background-color: #d5f4e6;
+            color: #27ae60;
+        }
+        
+        .status.disconnected {
+            background-color: #fadbd8;
+            color: #e74c3c;
+        }
+        
+        .status.processing {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .mode-selector {
+            margin: 10px 0;
+        }
+        
+        .mode-selector label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        
+        .logs {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        
+        .log-entry.info { color: #3498db; }
+        .log-entry.success { color: #27ae60; }
+        .log-entry.error { color: #e74c3c; }
+        .log-entry.warning { color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐟 Fish Detection API - Frontend Integration Example</h1>
+        
+        <!-- REST API Section -->
+        <div class="section">
+            <h2>📡 REST API Testing</h2>
+            
+            <div class="mode-selector">
+                <label>
+                    <input type="radio" name="apiMode" value="segmentation" checked>
+                    Segmentation (Detailed)
+                </label>
+                <label>
+                    <input type="radio" name="apiMode" value="detection">
+                    Detection (Fast)
+                </label>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <p>🖼️ Drag & drop an image here or click to select</p>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            </div>
+            
+            <div id="imagePreview" style="display: none;">
+                <img id="previewImg" class="image-preview" alt="Preview">
+            </div>
+            
+            <button id="detectBtn" disabled>🔍 Detect Fish</button>
+            <button id="clearBtn">🗑️ Clear</button>
+            
+            <div id="restResults" class="results" style="display: none;"></div>
+        </div>
+        
+        <!-- WebSocket Section -->
+        <div class="section">
+            <h2>⚡ WebSocket Real-time Testing</h2>
+            
+            <div id="wsStatus" class="status disconnected">Disconnected</div>
+            
+            <button id="connectBtn">🔌 Connect WebSocket</button>
+            <button id="disconnectBtn" disabled>❌ Disconnect</button>
+            <button id="pingBtn" disabled>📡 Ping</button>
+            
+            <div class="mode-selector">
+                <label>
+                    <input type="radio" name="wsMode" value="segmentation" checked>
+                    Segmentation Mode
+                </label>
+                <label>
+                    <input type="radio" name="wsMode" value="detection">
+                    Detection Mode
+                </label>
+            </div>
+            
+            <button id="wsSendImageBtn" disabled>📤 Send Current Image</button>
+            
+            <div id="wsResults" class="results" style="display: none;"></div>
+        </div>
+        
+        <!-- Statistics Section -->
+        <div class="section">
+            <h2>📊 API Statistics</h2>
+            
+            <button id="loadStatsBtn">📈 Load Statistics</button>
+            
+            <div id="statsResults" class="stats-grid" style="display: none;"></div>
+        </div>
+        
+        <!-- Logs Section -->
+        <div class="section">
+            <h2>📝 Activity Logs</h2>
+            <div id="logs" class="logs"></div>
+            <button id="clearLogsBtn">🗑️ Clear Logs</button>
+        </div>
+        
+        <!-- Code Examples -->
+        <div class="section">
+            <h2>💻 Integration Code Examples</h2>
+            
+            <h3>JavaScript Fetch API</h3>
+            <pre id="jsExample"></pre>
+            
+            <h3>WebSocket Connection</h3>
+            <pre id="wsExample"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentImage = null;
+        let websocket = null;
+        let sessionId = null;
+        
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const detectBtn = document.getElementById('detectBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const restResults = document.getElementById('restResults');
+        const wsStatus = document.getElementById('wsStatus');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const pingBtn = document.getElementById('pingBtn');
+        const wsSendImageBtn = document.getElementById('wsSendImageBtn');
+        const wsResults = document.getElementById('wsResults');
+        const loadStatsBtn = document.getElementById('loadStatsBtn');
+        const statsResults = document.getElementById('statsResults');
+        const logs = document.getElementById('logs');
+        const clearLogsBtn = document.getElementById('clearLogsBtn');
+        
+        // Utility functions
+        function generateSessionId() {
+            return 'session-' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function displayDetectionResults(results, container, title) {
+            container.innerHTML = `<h3>${title}</h3>`;
+            
+            if (results.detections && results.detections.length > 0) {
+                results.detections.forEach((detection, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'detection-item';
+                    item.innerHTML = `
+                        <h4>Detection ${index + 1}</h4>
+                        <p><strong>Species:</strong> ${detection.prediction}</p>
+                        <p><strong>Confidence:</strong> <span class="confidence">${(detection.confidence * 100).toFixed(1)}%</span></p>
+                        ${detection.segmentation ? `
+                            <p><strong>Segmentation Area:</strong> ${detection.segmentation.area_percentage?.toFixed(2)}% of image</p>
+                            <p><strong>Polygons:</strong> ${detection.segmentation.polygons ? detection.segmentation.polygons.length : 0}</p>
+                        ` : ''}
+                        <p><strong>Bounding Box:</strong> ${detection.bounding_box.coordinates_pixel.join(', ')}</p>
+                        <p><strong>Box Area:</strong> ${detection.bounding_box.area_percentage?.toFixed(2)}% of image</p>
+                    `;
+                    container.appendChild(item);
+                });
+            } else if (results.detection) {
+                // Single detection format
+                const detection = results.detection;
+                const item = document.createElement('div');
+                item.className = 'detection-item';
+                item.innerHTML = `
+                    <h4>Fish Detected</h4>
+                    <p><strong>Species:</strong> ${detection.prediction}</p>
+                    <p><strong>Confidence:</strong> <span class="confidence">${(detection.confidence * 100).toFixed(1)}%</span></p>
+                    <p><strong>Bounding Box:</strong> ${detection.bounding_box.coordinates_pixel.join(', ')}</p>
+                    <p><strong>Area:</strong> ${detection.bounding_box.area_percentage?.toFixed(2)}% of image</p>
+                `;
+                container.appendChild(item);
+            } else {
+                container.innerHTML += '<p>No fish detected in the image.</p>';
+            }
+            
+            container.style.display = 'block';
+        }
+        
+        // File upload handling
+        uploadArea.addEventListener('click', () => imageInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+        
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                log('Please select an image file', 'error');
+                return;
+            }
+            
+            currentImage = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                detectBtn.disabled = false;
+                wsSendImageBtn.disabled = websocket ? false : true;
+                log(`Image loaded: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`, 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // REST API Detection
+        detectBtn.addEventListener('click', async () => {
+            if (!currentImage) return;
+            
+            const mode = document.querySelector('input[name="apiMode"]:checked').value;
+            const endpoint = mode === 'segmentation' ? '/ai/api/predict/' : '/ai/api/detect/';
+            
+            detectBtn.disabled = true;
+            detectBtn.textContent = '🔄 Processing...';
+            log(`Starting ${mode} detection via REST API`, 'info');
+            
+            try {
+                const base64 = await fileToBase64(currentImage);
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: base64,
+                        save_to_db: true,
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayDetectionResults(data.result, restResults, `${mode.charAt(0).toUpperCase() + mode.slice(1)} Results`);
+                    log(`Detection completed: ${data.result.detections?.length || (data.result.detection ? 1 : 0)} fish found`, 'success');
+                    if (data.result.session_id) {
+                        sessionId = data.result.session_id;
+                        log(`Session ID: ${sessionId}`, 'info');
+                    }
+                } else {
+                    log(`Detection failed: ${data.error}`, 'error');
+                    restResults.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                    restResults.style.display = 'block';
+                }
+            } catch (error) {
+                log(`Request failed: ${error.message}`, 'error');
+                restResults.innerHTML = `<p style="color: red;">Request failed: ${error.message}</p>`;
+                restResults.style.display = 'block';
+            } finally {
+                detectBtn.disabled = false;
+                detectBtn.textContent = '🔍 Detect Fish';
+            }
+        });
+        
+        // Clear function
+        clearBtn.addEventListener('click', () => {
+            currentImage = null;
+            imagePreview.style.display = 'none';
+            restResults.style.display = 'none';
+            wsResults.style.display = 'none';
+            detectBtn.disabled = true;
+            wsSendImageBtn.disabled = true;
+            imageInput.value = '';
+            log('Interface cleared', 'info');
+        });
+        
+        // WebSocket handling
+        connectBtn.addEventListener('click', () => {
+            if (!sessionId) {
+                sessionId = generateSessionId();
+            }
+            
+            const wsUrl = `ws://localhost:8000/ws/ai/unified/${sessionId}/`;
+            log(`Connecting to WebSocket: ${wsUrl}`, 'info');
+            
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = () => {
+                wsStatus.textContent = 'Connected';
+                wsStatus.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                pingBtn.disabled = false;
+                wsSendImageBtn.disabled = currentImage ? false : true;
+                log('WebSocket connected successfully', 'success');
+            };
+            
+            websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                log(`WebSocket message: ${data.type}`, 'info');
+                
+                switch (data.type) {
+                    case 'connection_established':
+                        log(`Session established: ${data.session_id}`, 'success');
+                        log(`Current mode: ${data.current_mode}`, 'info');
+                        break;
+                    case 'prediction_result':
+                        displayDetectionResults(data.result, wsResults, `WebSocket ${data.mode.charAt(0).toUpperCase() + data.mode.slice(1)} Results`);
+                        log(`Processing time: ${data.processing_time?.toFixed(3)}s`, 'info');
+                        break;
+                    case 'mode_changed':
+                        log(`Mode changed to: ${data.new_mode}`, 'success');
+                        break;
+                    case 'pong':
+                        log('Pong received', 'success');
+                        break;
+                    case 'error':
+                        log(`WebSocket error: ${data.message}`, 'error');
+                        break;
+                }
+            };
+            
+            websocket.onerror = (error) => {
+                log('WebSocket error occurred', 'error');
+                console.error('WebSocket error:', error);
+            };
+            
+            websocket.onclose = () => {
+                wsStatus.textContent = 'Disconnected';
+                wsStatus.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                pingBtn.disabled = true;
+                wsSendImageBtn.disabled = true;
+                websocket = null;
+                log('WebSocket disconnected', 'warning');
+            };
+        });
+        
+        disconnectBtn.addEventListener('click', () => {
+            if (websocket) {
+                websocket.close();
+                log('WebSocket disconnection requested', 'info');
+            }
+        });
+        
+        pingBtn.addEventListener('click', () => {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({ type: 'ping' }));
+                log('Ping sent', 'info');
+            }
+        });
+        
+        // WebSocket mode change
+        document.querySelectorAll('input[name="wsMode"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    const mode = radio.value;
+                    websocket.send(JSON.stringify({
+                        type: 'change_mode',
+                        mode: mode
+                    }));
+                    log(`Requesting mode change to: ${mode}`, 'info');
+                }
+            });
+        });
+        
+        // Send image via WebSocket
+        wsSendImageBtn.addEventListener('click', async () => {
+            if (!websocket || !currentImage) return;
+            
+            const mode = document.querySelector('input[name="wsMode"]:checked').value;
+            const messageType = mode === 'segmentation' ? 'predict_segmentation' : 'predict_object_detection';
+            
+            wsSendImageBtn.disabled = true;
+            wsSendImageBtn.textContent = '📤 Sending...';
+            log(`Sending image for ${mode} via WebSocket`, 'info');
+            
+            try {
+                const base64 = await fileToBase64(currentImage);
+                
+                websocket.send(JSON.stringify({
+                    type: messageType,
+                    image: base64,
+                    save_to_db: true
+                }));
+                
+                log('Image sent successfully', 'success');
+            } catch (error) {
+                log(`Failed to send image: ${error.message}`, 'error');
+            } finally {
+                wsSendImageBtn.disabled = false;
+                wsSendImageBtn.textContent = '📤 Send Current Image';
+            }
+        });
+        
+        // Statistics loading
+        loadStatsBtn.addEventListener('click', async () => {
+            loadStatsBtn.disabled = true;
+            loadStatsBtn.textContent = '📊 Loading...';
+            log('Loading API statistics', 'info');
+            
+            try {
+                const response = await fetch('/ai/api/objects/statistics/');
+                const stats = await response.json();
+                
+                statsResults.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total_objects}</div>
+                        <div class="stat-label">Total Objects</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.unique_predictions}</div>
+                        <div class="stat-label">Unique Species</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${(stats.average_confidence * 100).toFixed(1)}%</div>
+                        <div class="stat-label">Avg Confidence</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.top_predictions[0]?.prediction || 'N/A'}</div>
+                        <div class="stat-label">Top Detection</div>
+                    </div>
+                `;
+                
+                statsResults.style.display = 'grid';
+                log(`Statistics loaded: ${stats.total_objects} total detections`, 'success');
+                
+            } catch (error) {
+                log(`Failed to load statistics: ${error.message}`, 'error');
+            } finally {
+                loadStatsBtn.disabled = false;
+                loadStatsBtn.textContent = '📈 Load Statistics';
+            }
+        });
+        
+        // Clear logs
+        clearLogsBtn.addEventListener('click', () => {
+            logs.innerHTML = '';
+            log('Logs cleared', 'info');
+        });
+        
+        // Initialize code examples
+        document.getElementById('jsExample').textContent = `
+// Basic fish detection with Fetch API
+async function detectFish(imageFile) {
+    const base64 = await fileToBase64(imageFile);
+    
+    const response = await fetch('/ai/api/predict/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            image: base64,
+            save_to_db: true
+        })
+    });
+    
+    const result = await response.json();
+    return result.success ? result.result : null;
+}
+
+// File to base64 conversion
+function fileToBase64(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+    });
+}`;
+
+        document.getElementById('wsExample').textContent = `
+// WebSocket real-time detection
+const sessionId = 'session-' + Math.random().toString(36).substr(2, 9);
+const socket = new WebSocket(\`ws://localhost:8000/ws/ai/unified/\${sessionId}/\`);
+
+socket.onopen = () => {
+    console.log('Connected to fish detection service');
+};
+
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    
+    if (data.type === 'prediction_result') {
+        console.log('Fish detected:', data.result.detections);
+        displayResults(data.result);
+    }
+};
+
+// Send image for detection
+socket.send(JSON.stringify({
+    type: 'predict_segmentation',
+    image: base64ImageData,
+    save_to_db: true
+}));`;
+        
+        // Initial log
+        log('Fish Detection API Integration Example loaded', 'success');
+        log('Upload an image to test REST API or connect WebSocket for real-time detection', 'info');
+    </script>
+</body>
+</html>

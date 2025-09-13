@@ -5,6 +5,14 @@ from django.views.decorators.http import require_http_methods
 from .models import DetectionSession, Detection, DetectedObject
 import uuid
 import json
+from django.views.generic import TemplateView
+
+
+class UnifiedWebSocketTestView(TemplateView):
+    template_name = 'ai/test_websocket_unified.html'
+
+class SegmentationWebSocketTestView(TemplateView):
+    template_name = 'ai/test_websocket.html'
 
 def index(request):
     """Main page for camera detection"""

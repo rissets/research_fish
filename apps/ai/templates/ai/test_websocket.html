@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Segmentation WebSocket Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .video-section {
+            text-align: center;
+        }
+
+        .video-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        #videoElement {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: cover;
+            display: block;
+        }
+
+        #overlayCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .canvas-container {
+            display: none;
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        #canvasElement {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .status-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-value {
+            font-family: 'Courier New', monospace;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-active {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .log-timestamp {
+            color: #888;
+        }
+
+        .log-info {
+            color: #4CAF50;
+        }
+
+        .log-error {
+            color: #f44336;
+        }
+
+        .log-warning {
+            color: #ff9800;
+        }
+
+        .log-data {
+            color: #2196F3;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .confidence-badge {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .captured-frame {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .captured-frame:hover {
+            transform: translateY(-5px);
+        }
+
+        .captured-frame img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .captured-frame .frame-info {
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .captured-frame .frame-confidence {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .high-confidence {
+            border: 3px solid #ff6b6b !important;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐟 YOLO AI WebSocket Test</h1>
+            <p>Real-time Fish Detection & Segmentation</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Video Section -->
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="videoElement" autoplay muted playsinline>
+                        <p>Your browser doesn't support video.</p>
+                    </video>
+                    <canvas id="overlayCanvas"></canvas>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="canvasElement"></canvas>
+                </div>
+
+                <div class="loading-spinner" id="loadingSpinner"></div>
+
+                <div class="controls">
+                    <button id="startCamera" class="btn btn-primary">📹 Start Camera</button>
+                    <button id="connectWS" class="btn btn-success" disabled>🔌 Connect WebSocket</button>
+                    <button id="startDetection" class="btn btn-success" disabled>🚀 Start Detection</button>
+                    <button id="stopDetection" class="btn btn-danger" disabled>⏹ Stop Detection</button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div class="input-group">
+                    <label for="detectionMode">Detection Mode:</label>
+                    <select id="detectionMode" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
+                        <option value="segmentation">🔍 Segmentation (Multi-object)</option>
+                        <option value="detection">🎯 Object Detection (Single best)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="confidenceThreshold">Confidence Threshold (%):</label>
+                    <input type="number" id="confidenceThreshold" value="70" min="0" max="100" step="1" placeholder="Confidence threshold for alerts">
+                    <small style="color: #666; font-size: 12px;">Alert beep will sound if detection confidence exceeds this threshold</small>
+                </div>
+
+                <div class="input-group">
+                    <label for="sessionId">Session ID:</label>
+                    <input type="text" id="sessionId" placeholder="Enter session ID or leave empty for auto-generated">
+                </div>
+
+                <div class="input-group">
+                    <label for="websocketUrl">WebSocket URL:</label>
+                    <input type="text" id="websocketUrl" value="ws://localhost:8001/ws/ai/" placeholder="WebSocket URL">
+                </div>
+
+                <div class="status-panel">
+                    <div class="status-item">
+                        <span class="status-label">Camera Status:</span>
+                        <span id="cameraStatus" class="status-value status-disconnected">Not Started</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">WebSocket Status:</span>
+                        <span id="wsStatus" class="status-value status-disconnected">Disconnected</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Detection Status:</span>
+                        <span id="detectionStatus" class="status-value status-disconnected">Stopped</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Objects Detected:</span>
+                        <span id="objectCount" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">High Confidence Alerts:</span>
+                        <span id="alertCount" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Frames Captured:</span>
+                        <span id="framesCaptured" class="status-value">0</span>
+                    </div>
+                </div>
+
+                <div class="results-grid" id="resultsContainer">
+                    <!-- Detection results will be displayed here -->
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px; color: #333;">📸 Captured Frames</h3>
+                    <div class="captured-frames" id="capturedFrames" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <!-- Captured frames will be displayed here -->
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="margin-bottom: 15px; color: #333;">📋 System Log</h3>
+                    <div class="log-container" id="logContainer">
+                        <div class="log-entry log-info">
+                            <span class="log-timestamp">[${new Date().toLocaleTimeString()}]</span> 
+                            System initialized. Ready to start...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class YOLOWebSocketTester {
+            constructor() {
+                this.video = document.getElementById('videoElement');
+                this.canvas = document.getElementById('canvasElement');
+                this.ctx = this.canvas.getContext('2d');
+                this.overlayCanvas = document.getElementById('overlayCanvas');
+                this.overlayCtx = this.overlayCanvas.getContext('2d');
+                this.websocket = null;
+                this.stream = null;
+                this.detectionInterval = null;
+                this.sessionId = null;
+                this.detectionMode = 'segmentation'; // Default mode
+                this.confidenceThreshold = 70; // Default threshold
+                this.alertCount = 0;
+                this.framesCaptured = 0;
+                this.capturedFrames = [];
+                this.currentDetections = []; // Track current detections for updates
+                this.detectionHistory = new Map(); // Track detection history by prediction name
+                
+                // Create audio context for beep sound
+                this.audioContext = null;
+                this.initAudioContext();
+                
+                this.initializeEventListeners();
+                this.updateUI();
+            }
+
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+
+            playBeep(frequency = 800, duration = 200) {
+                if (!this.audioContext) return;
+                
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + duration / 1000);
+                } catch (e) {
+                    console.log('Error playing beep:', e);
+                }
+            }
+
+            initializeEventListeners() {
+                document.getElementById('startCamera').addEventListener('click', () => this.startCamera());
+                document.getElementById('connectWS').addEventListener('click', () => this.connectWebSocket());
+                document.getElementById('startDetection').addEventListener('click', () => this.startDetection());
+                document.getElementById('stopDetection').addEventListener('click', () => this.stopDetection());
+            }
+
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            updateStatus(elementId, text, className = 'status-disconnected') {
+                const element = document.getElementById(elementId);
+                element.textContent = text;
+                element.className = `status-value ${className}`;
+            }
+
+            updateUI() {
+                const cameraStarted = this.stream !== null;
+                const wsConnected = this.websocket && this.websocket.readyState === WebSocket.OPEN;
+                const detecting = this.detectionInterval !== null;
+
+                document.getElementById('startCamera').disabled = cameraStarted;
+                document.getElementById('connectWS').disabled = !cameraStarted || wsConnected;
+                document.getElementById('startDetection').disabled = !wsConnected || detecting;
+                document.getElementById('stopDetection').disabled = !detecting;
+            }
+
+            async startCamera() {
+                try {
+                    this.log('🔍 Requesting camera access...', 'info');
+                    
+                    const constraints = {
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                            facingMode: 'environment' // Use back camera on mobile if available
+                        }
+                    };
+
+                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = this.stream;
+                    
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth;
+                        this.canvas.height = this.video.videoHeight;
+                        
+                        // Setup overlay canvas to match video dimensions
+                        this.setupOverlayCanvas();
+                        
+                        this.log('📹 Camera started successfully!', 'info');
+                        this.updateStatus('cameraStatus', 'Active', 'status-connected');
+                        this.updateUI();
+                    };
+
+                } catch (error) {
+                    this.log(`❌ Camera access failed: ${error.message}`, 'error');
+                    this.updateStatus('cameraStatus', 'Failed', 'status-disconnected');
+                }
+            }
+
+            setupOverlayCanvas() {
+                // Set overlay canvas size to match video display size
+                const videoRect = this.video.getBoundingClientRect();
+                this.overlayCanvas.width = this.video.videoWidth;
+                this.overlayCanvas.height = this.video.videoHeight;
+                
+                // Update overlay canvas on window resize
+                window.addEventListener('resize', () => {
+                    this.setupOverlayCanvas();
+                });
+            }
+
+            clearOverlay() {
+                this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+            }
+
+            drawBoundingBoxes(detections) {
+                this.clearOverlay();
+                
+                if (!detections || detections.length === 0) return;
+                
+                // Get video display dimensions vs actual video dimensions
+                const scaleX = this.overlayCanvas.width / this.canvas.width;
+                const scaleY = this.overlayCanvas.height / this.canvas.height;
+                
+                detections.forEach((detection, index) => {
+                    if (detection.bounding_box && detection.bounding_box.coordinates_pixel) {
+                        // Generate a unique color for each detection type
+                        const colors = [
+                            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                            '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'
+                        ];
+                        const color = colors[index % colors.length];
+                        
+                        const coords = detection.bounding_box.coordinates_pixel;
+                        const [x1, y1, x2, y2] = coords;
+                        
+                        // Scale coordinates
+                        const scaledX1 = x1 * scaleX;
+                        const scaledY1 = y1 * scaleY;
+                        const scaledX2 = x2 * scaleX;
+                        const scaledY2 = y2 * scaleY;
+                        
+                        const width = scaledX2 - scaledX1;
+                        const height = scaledY2 - scaledY1;
+                        
+                        // Draw main bounding box
+                        this.overlayCtx.strokeStyle = color;
+                        this.overlayCtx.lineWidth = 3;
+                        this.overlayCtx.strokeRect(scaledX1, scaledY1, width, height);
+                        
+                        // Draw semi-transparent fill
+                        this.overlayCtx.fillStyle = color + '15'; // Very light transparency
+                        this.overlayCtx.fillRect(scaledX1, scaledY1, width, height);
+                        
+                        // Draw corner markers for better visibility
+                        const cornerSize = 15;
+                        this.overlayCtx.strokeStyle = color;
+                        this.overlayCtx.lineWidth = 4;
+                        
+                        // Top-left corner
+                        this.overlayCtx.beginPath();
+                        this.overlayCtx.moveTo(scaledX1, scaledY1 + cornerSize);
+                        this.overlayCtx.lineTo(scaledX1, scaledY1);
+                        this.overlayCtx.lineTo(scaledX1 + cornerSize, scaledY1);
+                        this.overlayCtx.stroke();
+                        
+                        // Top-right corner
+                        this.overlayCtx.beginPath();
+                        this.overlayCtx.moveTo(scaledX2 - cornerSize, scaledY1);
+                        this.overlayCtx.lineTo(scaledX2, scaledY1);
+                        this.overlayCtx.lineTo(scaledX2, scaledY1 + cornerSize);
+                        this.overlayCtx.stroke();
+                        
+                        // Bottom-left corner
+                        this.overlayCtx.beginPath();
+                        this.overlayCtx.moveTo(scaledX1, scaledY2 - cornerSize);
+                        this.overlayCtx.lineTo(scaledX1, scaledY2);
+                        this.overlayCtx.lineTo(scaledX1 + cornerSize, scaledY2);
+                        this.overlayCtx.stroke();
+                        
+                        // Bottom-right corner
+                        this.overlayCtx.beginPath();
+                        this.overlayCtx.moveTo(scaledX2 - cornerSize, scaledY2);
+                        this.overlayCtx.lineTo(scaledX2, scaledY2);
+                        this.overlayCtx.lineTo(scaledX2, scaledY2 - cornerSize);
+                        this.overlayCtx.stroke();
+                        
+                        // Draw confidence indicator (circle)
+                        const confidence = detection.confidence * 100;
+                        const isHighConfidence = confidence >= this.confidenceThreshold;
+                        
+                        const indicatorX = scaledX2 - 15;
+                        const indicatorY = scaledY1 + 15;
+                        
+                        this.overlayCtx.beginPath();
+                        this.overlayCtx.arc(indicatorX, indicatorY, 8, 0, 2 * Math.PI);
+                        this.overlayCtx.fillStyle = isHighConfidence ? '#FF4444' : '#44FF44';
+                        this.overlayCtx.fill();
+                        this.overlayCtx.strokeStyle = 'white';
+                        this.overlayCtx.lineWidth = 2;
+                        this.overlayCtx.stroke();
+                        
+                        // Draw label background with gradient
+                        const label = `${detection.prediction} ${confidence.toFixed(1)}%`;
+                        this.overlayCtx.font = 'bold 16px Arial';
+                        const textMetrics = this.overlayCtx.measureText(label);
+                        const textWidth = textMetrics.width;
+                        const textHeight = 20;
+                        
+                        // Position label above the box if there's space, otherwise below
+                        const labelY = scaledY1 > 30 ? scaledY1 - 5 : scaledY2 + textHeight + 5;
+                        
+                        // Create gradient for label background
+                        const gradient = this.overlayCtx.createLinearGradient(
+                            scaledX1, labelY - textHeight, 
+                            scaledX1, labelY
+                        );
+                        gradient.addColorStop(0, color);
+                        gradient.addColorStop(1, color + 'CC');
+                        
+                        this.overlayCtx.fillStyle = gradient;
+                        this.overlayCtx.fillRect(scaledX1, labelY - textHeight, textWidth + 16, textHeight + 4);
+                        
+                        // Draw label text with shadow
+                        this.overlayCtx.fillStyle = 'rgba(0,0,0,0.5)';
+                        this.overlayCtx.fillText(label, scaledX1 + 9, labelY - 5);
+                        this.overlayCtx.fillStyle = 'white';
+                        this.overlayCtx.fillText(label, scaledX1 + 8, labelY - 6);
+                        
+                        // Draw size info if space allows
+                        if (width > 100 && height > 60) {
+                            const sizeInfo = `${Math.round(width)}×${Math.round(height)}px`;
+                            this.overlayCtx.font = '12px Arial';
+                            this.overlayCtx.fillStyle = 'rgba(255,255,255,0.8)';
+                            this.overlayCtx.fillText(sizeInfo, scaledX1 + 8, scaledY2 - 8);
+                        }
+                    }
+                });
+            }
+
+            drawSegmentationPolygons(detections) {
+                this.clearOverlay();
+                
+                if (!detections || detections.length === 0) return;
+                
+                // Get video display dimensions vs actual video dimensions
+                const scaleX = this.overlayCanvas.width / this.canvas.width;
+                const scaleY = this.overlayCanvas.height / this.canvas.height;
+                
+                detections.forEach((detection, index) => {
+                    if (detection.segmentation && detection.segmentation.polygons) {
+                        // Generate a unique color for each detection
+                        const colors = [
+                            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                            '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'
+                        ];
+                        const color = colors[index % colors.length];
+                        
+                        this.overlayCtx.strokeStyle = color;
+                        this.overlayCtx.fillStyle = color + '40'; // Semi-transparent fill
+                        this.overlayCtx.lineWidth = 2;
+                        
+                        // Draw each polygon in the segmentation
+                        detection.segmentation.polygons.forEach(polygon => {
+                            if (polygon && polygon.length >= 6) { // At least 3 points (x,y pairs)
+                                this.overlayCtx.beginPath();
+                                
+                                // Move to first point
+                                this.overlayCtx.moveTo(
+                                    polygon[0] * scaleX, 
+                                    polygon[1] * scaleY
+                                );
+                                
+                                // Draw lines to other points
+                                for (let i = 2; i < polygon.length; i += 2) {
+                                    this.overlayCtx.lineTo(
+                                        polygon[i] * scaleX, 
+                                        polygon[i + 1] * scaleY
+                                    );
+                                }
+                                
+                                this.overlayCtx.closePath();
+                                this.overlayCtx.fill();
+                                this.overlayCtx.stroke();
+                                
+                                // Draw label
+                                const centerX = polygon[0] * scaleX;
+                                const centerY = polygon[1] * scaleY;
+                                
+                                this.overlayCtx.fillStyle = color;
+                                this.overlayCtx.font = '14px Arial';
+                                this.overlayCtx.fillText(
+                                    `${detection.prediction} ${(detection.confidence * 100).toFixed(1)}%`,
+                                    centerX + 5,
+                                    centerY - 5
+                                );
+                            }
+                        });
+                    }
+                });
+            }
+
+            connectWebSocket() {
+                try {
+                    // Generate session ID if not provided
+                    let sessionId = document.getElementById('sessionId').value.trim();
+                    if (!sessionId) {
+                        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                        document.getElementById('sessionId').value = sessionId;
+                    }
+                    this.sessionId = sessionId;
+
+                    // Get detection mode
+                    const detectionMode = document.getElementById('detectionMode').value;
+                    this.detectionMode = detectionMode;
+
+                    const wsUrl = document.getElementById('websocketUrl').value + sessionId + '/';
+                    this.log(`🔌 Connecting to WebSocket (${detectionMode} mode): ${wsUrl}`, 'info');
+
+                    this.websocket = new WebSocket(wsUrl);
+
+                    this.websocket.onopen = () => {
+                        this.log('✅ WebSocket connected successfully!', 'info');
+                        this.updateStatus('wsStatus', 'Connected', 'status-connected');
+                        this.updateUI();
+                        
+                        // Start keep-alive ping every 30 seconds
+                        this.pingInterval = setInterval(() => {
+                            if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+                                this.websocket.send(JSON.stringify({type: 'ping'}));
+                                this.log('🏓 Sent keep-alive ping', 'data');
+                            }
+                        }, 30000);
+                    };
+
+                    this.websocket.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            this.handleDetectionResult(data);
+                        } catch (error) {
+                            this.log(`❌ Failed to parse WebSocket message: ${error.message}`, 'error');
+                        }
+                    };
+
+                    this.websocket.onclose = () => {
+                        this.log('🔌 WebSocket disconnected', 'warning');
+                        this.updateStatus('wsStatus', 'Disconnected', 'status-disconnected');
+                        this.updateUI();
+                        
+                        // Clear ping interval
+                        if (this.pingInterval) {
+                            clearInterval(this.pingInterval);
+                            this.pingInterval = null;
+                        }
+                    };
+
+                    this.websocket.onerror = (error) => {
+                        this.log(`❌ WebSocket error: ${error}`, 'error');
+                        this.updateStatus('wsStatus', 'Error', 'status-disconnected');
+                    };
+
+                } catch (error) {
+                    this.log(`❌ WebSocket connection failed: ${error.message}`, 'error');
+                }
+            }
+
+            startDetection() {
+                if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+                    this.log('❌ WebSocket not connected', 'error');
+                    return;
+                }
+
+                this.log('🚀 Starting detection...', 'info');
+                this.updateStatus('detectionStatus', 'Active', 'status-active');
+
+                // Send frames every 2 seconds
+                this.detectionInterval = setInterval(() => {
+                    this.captureAndSendFrame();
+                }, 2000);
+
+                this.updateUI();
+            }
+
+            stopDetection() {
+                if (this.detectionInterval) {
+                    clearInterval(this.detectionInterval);
+                    this.detectionInterval = null;
+                }
+
+                // Clear overlay when stopping detection
+                this.clearOverlay();
+
+                this.log('⏹ Detection stopped', 'warning');
+                this.updateStatus('detectionStatus', 'Stopped', 'status-disconnected');
+                this.updateUI();
+            }
+
+            captureAndSendFrame() {
+                try {
+                    // Get current confidence threshold
+                    this.confidenceThreshold = parseFloat(document.getElementById('confidenceThreshold').value) || 70;
+                    
+                    // Draw current video frame to canvas
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // Convert canvas to base64
+                    const imageData = this.canvas.toDataURL('image/jpeg', 0.8);
+                    const base64Data = imageData.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+
+                    // Send to WebSocket with detection mode
+                    const message = {
+                        type: this.detectionMode === 'detection' ? 'predict_object_detection' : 'predict_segmentation',
+                        image: base64Data,
+                        timestamp: new Date().toISOString(),
+                        detection_mode: this.detectionMode,
+                        confidence_threshold: this.confidenceThreshold
+                    };
+
+                    this.websocket.send(JSON.stringify(message));
+                    this.log(`📤 Frame sent for ${this.detectionMode} (${(base64Data.length / 1024).toFixed(1)} KB)`, 'data');
+
+                } catch (error) {
+                    this.log(`❌ Failed to capture frame: ${error.message}`, 'error');
+                }
+            }
+
+            handleDetectionResult(data) {
+                this.log(`📥 Received message: ${data.type}`, 'data');
+                
+                // Log full response to console for debugging
+                console.log('WebSocket Response:', data);
+                
+                if (data.type === 'connection_established') {
+                    this.log(`✅ Connection established, session: ${data.session_id}`, 'info');
+                    this.sessionId = data.session_id;
+                    
+                } else if (data.type === 'prediction_result') {
+                    const result = data.result;
+                    
+                    // Handle both segmentation (multiple objects) and detection (single object) results
+                    let detections = [];
+                    if (this.detectionMode === 'detection') {
+                        // Single object detection
+                        if (result.detection) {
+                            detections = [result.detection];
+                        }
+                    } else {
+                        // Multiple object segmentation
+                        detections = result.detections || [];
+                    }
+                    
+                    this.updateStatus('objectCount', detections.length.toString());
+                    this.log(`🎯 Detected ${detections.length} objects (${this.detectionMode} mode)`, 'info');
+                    
+                    // Check for high confidence detections
+                    let hasHighConfidence = false;
+                    let maxConfidence = 0;
+                    
+                    detections.forEach(obj => {
+                        const confidence = obj.confidence * 100;
+                        if (confidence > maxConfidence) maxConfidence = confidence;
+                        if (confidence >= this.confidenceThreshold) {
+                            hasHighConfidence = true;
+                        }
+                    });
+                    
+                    // Handle high confidence alert
+                    if (hasHighConfidence) {
+                        this.alertCount++;
+                        this.updateStatus('alertCount', this.alertCount.toString());
+                        this.playBeep(800, 300); // Play beep sound
+                        this.log(`🚨 HIGH CONFIDENCE ALERT! Max confidence: ${maxConfidence.toFixed(1)}%`, 'warning');
+                        
+                        // Capture frame for high confidence detection
+                        this.captureFrame(detections, maxConfidence);
+                    }
+                    
+                    // Draw appropriate overlays based on mode
+                    if (this.detectionMode === 'detection') {
+                        this.drawBoundingBoxes(detections);
+                    } else {
+                        this.drawSegmentationPolygons(detections);
+                    }
+                    
+                    // Display results
+                    this.displayResults(detections, result);
+                    
+                    // Log each detected object
+                    detections.forEach((obj, index) => {
+                        const confidence = (obj.confidence * 100).toFixed(1);
+                        const alertIcon = confidence >= this.confidenceThreshold ? '🚨' : '';
+                        this.log(`   ${index + 1}. ${obj.prediction} (${confidence}%) ${alertIcon}`, 'data');
+                    });
+                    
+                } else if (data.type === 'error') {
+                    this.log(`❌ Error: ${data.message}`, 'error');
+                    
+                } else if (data.type === 'pong') {
+                    this.log(`🏓 Pong received`, 'data');
+                    
+                } else {
+                    this.log(`❓ Unknown message type: ${data.type}`, 'warning');
+                }
+            }
+
+            captureFrame(detections, maxConfidence) {
+                try {
+                    // Create a canvas with the current frame and overlay
+                    const captureCanvas = document.createElement('canvas');
+                    const captureCtx = captureCanvas.getContext('2d');
+                    
+                    captureCanvas.width = this.canvas.width;
+                    captureCanvas.height = this.canvas.height;
+                    
+                    // Draw the original frame
+                    captureCtx.drawImage(this.video, 0, 0, captureCanvas.width, captureCanvas.height);
+                    
+                    // Draw overlay on captured frame
+                    captureCtx.drawImage(this.overlayCanvas, 0, 0);
+                    
+                    // Convert to data URL
+                    const frameDataUrl = captureCanvas.toDataURL('image/jpeg', 0.9);
+                    
+                    // Store captured frame
+                    const frameData = {
+                        id: Date.now(),
+                        timestamp: new Date().toISOString(),
+                        dataUrl: frameDataUrl,
+                        detections: detections,
+                        maxConfidence: maxConfidence,
+                        mode: this.detectionMode
+                    };
+                    
+                    this.capturedFrames.push(frameData);
+                    this.framesCaptured++;
+                    this.updateStatus('framesCaptured', this.framesCaptured.toString());
+                    
+                    // Display captured frame
+                    this.displayCapturedFrame(frameData);
+                    
+                    this.log(`📸 Frame captured (${maxConfidence.toFixed(1)}% confidence)`, 'info');
+                    
+                } catch (error) {
+                    this.log(`❌ Failed to capture frame: ${error.message}`, 'error');
+                }
+            }
+
+            displayCapturedFrame(frameData) {
+                const container = document.getElementById('capturedFrames');
+                
+                const frameDiv = document.createElement('div');
+                frameDiv.className = 'captured-frame';
+                if (frameData.maxConfidence >= this.confidenceThreshold) {
+                    frameDiv.classList.add('high-confidence');
+                }
+                
+                const timestamp = new Date(frameData.timestamp).toLocaleTimeString();
+                const detectionText = frameData.detections.length > 0 ? 
+                    frameData.detections[0].prediction : 'No detection';
+                
+                frameDiv.innerHTML = `
+                    <img src="${frameData.dataUrl}" alt="Captured frame">
+                    <div class="frame-info">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <strong>${detectionText}</strong>
+                            <span class="frame-confidence">${frameData.maxConfidence.toFixed(1)}%</span>
+                        </div>
+                        <div style="font-size: 10px; color: #666;">
+                            📅 ${timestamp}<br>
+                            🎯 ${frameData.mode} mode<br>
+                            🔍 ${frameData.detections.length} object(s)
+                        </div>
+                    </div>
+                `;
+                
+                // Add click handler to view full size
+                frameDiv.addEventListener('click', () => {
+                    this.showFullSizeFrame(frameData);
+                });
+                
+                // Insert at the beginning (newest first)
+                container.insertBefore(frameDiv, container.firstChild);
+                
+                // Limit to 20 frames
+                while (container.children.length > 20) {
+                    container.removeChild(container.lastChild);
+                    this.capturedFrames.pop();
+                }
+            }
+
+            showFullSizeFrame(frameData) {
+                // Create modal overlay
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.8); z-index: 10000;
+                    display: flex; justify-content: center; align-items: center;
+                    cursor: pointer;
+                `;
+                
+                const img = document.createElement('img');
+                img.src = frameData.dataUrl;
+                img.style.cssText = 'max-width: 90%; max-height: 90%; border-radius: 10px;';
+                
+                modal.appendChild(img);
+                document.body.appendChild(modal);
+                
+                // Close on click
+                modal.addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+            }
+
+            displayResults(detections, result) {
+                const container = document.getElementById('resultsContainer');
+                
+                if (detections.length === 0) {
+                    const message = this.detectionMode === 'detection' ? 'No fish detected' : 'No objects detected';
+                    container.innerHTML = `<div class="result-card"><p style="text-align: center; color: #666;">${message}</p></div>`;
+                    this.currentDetections = [];
+                    return;
+                }
+
+                // Store current detections
+                this.currentDetections = detections;
+
+                // Group detections by prediction name for updates
+                const detectionMap = new Map();
+                detections.forEach((obj, index) => {
+                    const key = obj.prediction;
+                    if (!detectionMap.has(key)) {
+                        detectionMap.set(key, []);
+                    }
+                    detectionMap.get(key).push({...obj, originalIndex: index});
+                });
+
+                // Clear container only if we have completely different objects
+                const currentPredictions = Array.from(detectionMap.keys()).sort();
+                const existingCards = container.querySelectorAll('.result-card[data-prediction]');
+                const existingPredictions = Array.from(existingCards).map(card => card.getAttribute('data-prediction')).sort();
+                
+                const predictionsChanged = JSON.stringify(currentPredictions) !== JSON.stringify(existingPredictions);
+                
+                if (predictionsChanged) {
+                    container.innerHTML = '';
+                }
+
+                detectionMap.forEach((objectsOfType, prediction) => {
+                    // Find or create card for this prediction type
+                    let card = container.querySelector(`[data-prediction="${prediction}"]`);
+                    
+                    if (!card) {
+                        card = document.createElement('div');
+                        card.className = 'result-card';
+                        card.setAttribute('data-prediction', prediction);
+                        container.appendChild(card);
+                    }
+
+                    // Get the best (highest confidence) detection of this type
+                    const bestDetection = objectsOfType.reduce((best, current) => 
+                        current.confidence > best.confidence ? current : best
+                    );
+                    
+                    const confidence = (bestDetection.confidence * 100).toFixed(1);
+                    const count = objectsOfType.length;
+                    const isHighConfidence = parseFloat(confidence) >= this.confidenceThreshold;
+                    
+                    // Update detection history
+                    if (!this.detectionHistory.has(prediction)) {
+                        this.detectionHistory.set(prediction, {
+                            firstSeen: new Date().toISOString(),
+                            detectionCount: 0,
+                            maxConfidence: 0,
+                            avgConfidence: 0
+                        });
+                    }
+                    
+                    const history = this.detectionHistory.get(prediction);
+                    history.detectionCount++;
+                    history.maxConfidence = Math.max(history.maxConfidence, parseFloat(confidence));
+                    history.avgConfidence = ((history.avgConfidence * (history.detectionCount - 1)) + parseFloat(confidence)) / history.detectionCount;
+                    
+                    // Get area and dimension info based on detection mode
+                    let areaInfo = '';
+                    let dimensionInfo = '';
+                    
+                    if (this.detectionMode === 'detection' && bestDetection.bounding_box) {
+                        // Object detection mode - show bounding box info
+                        const areaPixels = bestDetection.bounding_box.area_pixels || 0;
+                        const areaPercentage = bestDetection.bounding_box.area_percentage || 0;
+                        const [width, height] = bestDetection.bounding_box.size_pixels || [0, 0];
+                        const [x1, y1, x2, y2] = bestDetection.bounding_box.coordinates_pixel || [0, 0, 0, 0];
+                        
+                        areaInfo = `<p><strong>Bounding Box Area:</strong> ${areaPixels} pixels (${areaPercentage.toFixed(2)}%)</p>`;
+                        dimensionInfo = `
+                            <p><strong>Box Size:</strong> ${width} × ${height} pixels</p>
+                            <p><strong>Coordinates:</strong> (${x1}, ${y1}) to (${x2}, ${y2})</p>
+                        `;
+                    } else if (this.detectionMode === 'segmentation' && bestDetection.segmentation) {
+                        // Segmentation mode - show segmentation info
+                        const areaPixels = bestDetection.segmentation.area_pixels || 0;
+                        const areaPercentage = bestDetection.segmentation.area_percentage || 0;
+                        const polygonCount = bestDetection.segmentation.polygons ? bestDetection.segmentation.polygons.length : 0;
+                        const ratio = bestDetection.segmentation_bbox_ratio || 0;
+                        
+                        areaInfo = `<p><strong>Segmentation Area:</strong> ${areaPixels} pixels (${areaPercentage.toFixed(2)}%)</p>`;
+                        dimensionInfo = `
+                            <p><strong>Polygons:</strong> ${polygonCount} segments</p>
+                            <p><strong>Seg/Box Ratio:</strong> ${ratio.toFixed(2)}%</p>
+                        `;
+                    }
+                    
+                    // Generate color for this detection (same as overlay)
+                    const colors = [
+                        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                        '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD'
+                    ];
+                    const color = colors[bestDetection.originalIndex % colors.length];
+                    
+                    const modeIcon = this.detectionMode === 'detection' ? '🎯' : '🔍';
+                    const modeText = this.detectionMode === 'detection' ? 'Object Detection' : 'Segmentation';
+                    
+                    // Add update timestamp and pulse effect for high confidence
+                    const lastUpdate = new Date().toLocaleTimeString();
+                    const cardClass = isHighConfidence ? 'result-card high-confidence' : 'result-card';
+                    card.className = cardClass;
+                    
+                    card.innerHTML = `
+                        <div class="result-header">
+                            <h4 style="color: ${color};">${modeIcon} ${prediction}</h4>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                ${count > 1 ? `<span style="background: #666; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px;">×${count}</span>` : ''}
+                                <span class="confidence-badge" style="background: ${isHighConfidence ? '#ff4444' : '#4CAF50'};">${confidence}%</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 14px; color: #666;">
+                            <p><strong>Mode:</strong> ${modeText}</p>
+                            ${areaInfo}
+                            <p><strong>Class ID:</strong> ${bestDetection.class_id}</p>
+                            ${dimensionInfo}
+                            <p><strong>Detection Stats:</strong></p>
+                            <div style="font-size: 12px; margin-left: 10px;">
+                                <p>• Times seen: ${history.detectionCount}</p>
+                                <p>• Max confidence: ${history.maxConfidence.toFixed(1)}%</p>
+                                <p>• Avg confidence: ${history.avgConfidence.toFixed(1)}%</p>
+                                <p>• Last update: ${lastUpdate}</p>
+                            </div>
+                            <p style="color: ${color}; font-weight: bold; margin-top: 10px;">■ Detection Color</p>
+                        </div>
+                    `;
+                });
+                
+                // Sort cards by confidence (highest first)
+                const cards = Array.from(container.children);
+                cards.sort((a, b) => {
+                    const aConf = parseFloat(a.querySelector('.confidence-badge').textContent);
+                    const bConf = parseFloat(b.querySelector('.confidence-badge').textContent);
+                    return bConf - aConf;
+                });
+                
+                cards.forEach(card => container.appendChild(card));
+            }
+        }
+
+        // Initialize the application when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new YOLOWebSocketTester();
+        });
+    </script>
+</body>
+</html>
