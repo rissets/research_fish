@@ -132,6 +132,9 @@ def start_training():
         "--data", selected_dataset['path'],
         "--epochs", str(epochs),
         "--batch", str(batch),
+        "--img", "640",  # image size
+        "--weights", "yolov8n.pt",  # use YOLOv8 nano detection model
+        "--task", "detect",  # specify detection task
         "--validate",
     ]
     
