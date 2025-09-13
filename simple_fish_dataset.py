@@ -50,16 +50,17 @@ class SimpleFishDatasetDownloader:
             (sample_dir / split / 'images').mkdir(parents=True, exist_ok=True)
             (sample_dir / split / 'labels').mkdir(parents=True, exist_ok=True)
         
-        # Create sample images (colored rectangles representing fish)
-        colors = [
-            (255, 0, 0),    # Red fish
-            (0, 255, 0),    # Green fish  
-            (0, 0, 255),    # Blue fish
-            (255, 255, 0),  # Yellow fish
-            (255, 0, 255),  # Magenta fish
+        # Create sample images with different fish species
+        fish_species = [
+            {'name': 'tuna', 'color': (255, 100, 100), 'shape': 'oval'},
+            {'name': 'salmon', 'color': (255, 180, 120), 'shape': 'elongated'},
+            {'name': 'cod', 'color': (200, 200, 255), 'shape': 'round'},
+            {'name': 'bass', 'color': (100, 255, 100), 'shape': 'angular'},
+            {'name': 'trout', 'color': (255, 255, 100), 'shape': 'streamlined'},
+            {'name': 'mackerel', 'color': (100, 200, 255), 'shape': 'striped'},
+            {'name': 'snapper', 'color': (255, 150, 150), 'shape': 'compact'},
+            {'name': 'grouper', 'color': (150, 150, 200), 'shape': 'bulky'}
         ]
-        
-        fish_types = ['tuna', 'salmon', 'cod', 'bass', 'trout']
         
         # Generate sample images and labels
         for split_idx, split in enumerate(['train', 'val', 'test']):

@@ -1,7 +1,0 @@
-names:
-- fish
-nc: 1
-path: datasets/fish_sample
-test: test/images
-train: train/images
-val: val/images

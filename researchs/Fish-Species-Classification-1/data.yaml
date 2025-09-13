@@ -1,8 +1,0 @@
-path: /mnt/arch-data/data/research_od/Fish-Species-Classification-1
-train: train/images
-val: valid/images
-nc: 3
-names:
-- grouper
-- northern-red-snapper
-- salmon
