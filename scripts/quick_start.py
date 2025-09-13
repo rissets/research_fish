@@ -61,7 +61,7 @@ def download_datasets():
 
 def list_available_datasets():
     """List available datasets for training"""
-    datasets_dir = Path("./datasets")
+    datasets_dir = Path("../datasets")
     if not datasets_dir.exists():
         print("❌ No datasets directory found")
         return []
