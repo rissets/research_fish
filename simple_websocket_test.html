@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple WebSocket Test</title>
+</head>
+<body>
+    <h1>Simple WebSocket Test</h1>
+    <div id="log"></div>
+    
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+        }
+        
+        function testWebSocket() {
+            log('Testing WebSocket connection...');
+            
+            const ws = new WebSocket('ws://localhost:8001/ws/segmentation/simple_test_session/');
+            
+            ws.onopen = function(event) {
+                log('✅ WebSocket connected successfully!');
+                
+                // Send test message
+                const testMessage = {
+                    type: 'ping'
+                };
+                ws.send(JSON.stringify(testMessage));
+                log('📤 Sent ping message');
+            };
+            
+            ws.onmessage = function(event) {
+                log('📥 Received: ' + event.data);
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'connection_established') {
+                    log('🎉 Connection established with session: ' + data.session_id);
+                } else if (data.type === 'pong') {
+                    log('🏓 Pong received!');
+                }
+            };
+            
+            ws.onclose = function(event) {
+                log('🔌 WebSocket closed. Code: ' + event.code + ', Reason: ' + event.reason);
+            };
+            
+            ws.onerror = function(error) {
+                log('❌ WebSocket error: ' + error);
+            };
+        }
+        
+        // Start test when page loads
+        setTimeout(testWebSocket, 1000);
+    </script>
+</body>
+</html>

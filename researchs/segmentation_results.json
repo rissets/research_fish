@@ -1,0 +1,140 @@
+{
+  "total_frames": 1,
+  "frames": [
+    {
+      "frame_number": 1,
+      "frame_size": [
+        640,
+        480
+      ],
+      "detections": [
+        {
+          "object_id": 1,
+          "prediction": "person",
+          "class_id": 0,
+          "confidence": 0.7801586985588074,
+          "segmentation": {
+            "area_pixels": 77496,
+            "area_percentage": 25.2265625,
+            "polygons": [
+              [
+                0.165625,
+                0.5458333333333333,
+                0.296875,
+                0.9979166666666667,
+                0.7546875,
+                0.9979166666666667,
+                0.784375,
+                0.4791666666666667,
+                0.4609375,
+                0.45416666666666666
+              ]
+            ],
+            "bounding_coordinates_pixel": [
+              106,
+              218,
+              508,
+              479
+            ],
+            "yolo_format": [
+              0,
+              0.4796875,
+              0.7260416666666667,
+              0.628125,
+              0.54375
+            ],
+            "size_pixels": [
+              402,
+              261
+            ]
+          },
+          "bounding_box": {
+            "area_pixels": 106110,
+            "area_percentage": 34.541015625,
+            "coordinates_pixel": [
+              105,
+              217,
+              510,
+              479
+            ],
+            "yolo_format": [
+              0,
+              0.48046875,
+              0.725,
+              0.6328125,
+              0.5458333333333333
+            ],
+            "size_pixels": [
+              405,
+              262
+            ]
+          },
+          "segmentation_bbox_ratio": 73.03364433135425
+        },
+        {
+          "object_id": 2,
+          "prediction": "cat",
+          "class_id": 15,
+          "confidence": 0.33759304881095886,
+          "segmentation": {
+            "area_pixels": 4209,
+            "area_percentage": 1.3701171875,
+            "polygons": [
+              [
+                0.003125,
+                0.9979166666666667,
+                0.196875,
+                0.9979166666666667,
+                0.2078125,
+                0.94375,
+                0.0640625,
+                0.9208333333333333,
+                0.003125,
+                0.9604166666666667
+              ]
+            ],
+            "bounding_coordinates_pixel": [
+              2,
+              442,
+              133,
+              479
+            ],
+            "yolo_format": [
+              15,
+              0.10546875,
+              0.959375,
+              0.2046875,
+              0.07708333333333334
+            ],
+            "size_pixels": [
+              131,
+              37
+            ]
+          },
+          "bounding_box": {
+            "area_pixels": 5070,
+            "area_percentage": 1.6503906249999998,
+            "coordinates_pixel": [
+              0,
+              440,
+              130,
+              479
+            ],
+            "yolo_format": [
+              15,
+              0.1015625,
+              0.9572916666666667,
+              0.203125,
+              0.08125
+            ],
+            "size_pixels": [
+              130,
+              39
+            ]
+          },
+          "segmentation_bbox_ratio": 83.01775147928994
+        }
+      ]
+    }
+  ]
+}

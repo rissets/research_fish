@@ -1,0 +1,12 @@
+# Dataset configuration for YOLO training
+# Path relatif dari root project
+
+# Paths to dataset
+train: datasets/images
+val: datasets/images  # Menggunakan dataset yang sama untuk validation, bisa dipisah nanti
+
+# Number of classes
+nc: 2
+
+# Class names
+names: ['bilal', 'andi']
