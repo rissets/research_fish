@@ -18,7 +18,55 @@ class FishDatasetConverter:
         self.source_path = Path(source_path)
         self.output_path = Path(output_path)
         self.class_names = []
+        self.class_names_indonesian = []
         self.class_to_id = {}
+        
+        # Mapping nama ikan dari bahasa Inggris ke bahasa Indonesia
+        self.fish_name_mapping = {
+            'Black Sea Sprat': 'Ikan Sprat Laut Hitam',
+            'Gilt-Head Bream': 'Ikan Bawal Emas',
+            'Hourse Mackerel': 'Ikan Kembung Kuda',
+            'Red Mullet': 'Ikan Kuniran Merah',
+            'Red Sea Bream': 'Ikan Bawal Merah',
+            'Sea Bass': 'Ikan Kakap Laut',
+            'Shrimp': 'Udang',
+            'Striped Red Mullet': 'Ikan Kuniran Bergaris',
+            'Trout': 'Ikan Trout',
+            'Anchovy': 'Ikan Teri',
+            'Sardine': 'Ikan Sarden',
+            'Mackerel': 'Ikan Kembung',
+            'Tuna': 'Ikan Tuna',
+            'Salmon': 'Ikan Salmon',
+            'Cod': 'Ikan Kod',
+            'Herring': 'Ikan Hering',
+            'Plaice': 'Ikan Lidah Buntal',
+            'Sole': 'Ikan Lidah',
+            'Whiting': 'Ikan Whiting',
+            'Haddock': 'Ikan Haddock',
+            'Pollock': 'Ikan Pollock',
+            'Flounder': 'Ikan Sebelah',
+            'Turbot': 'Ikan Turbot',
+            'Halibut': 'Ikan Halibut',
+            'Monkfish': 'Ikan Setan Laut',
+            'John Dory': 'Ikan John Dory',
+            'Gurnard': 'Ikan Gurnard',
+            'Brill': 'Ikan Brill',
+            'Dab': 'Ikan Dab',
+            'Lemon Sole': 'Ikan Lidah Lemon',
+            'Dover Sole': 'Ikan Lidah Dover',
+            # Tambahan untuk kemungkinan nama lain
+            'Bass': 'Ikan Bass',
+            'Catfish': 'Ikan Lele',
+            'Carp': 'Ikan Mas',
+            'Snapper': 'Ikan Kakap',
+            'Grouper': 'Ikan Kerapu',
+            'Barracuda': 'Ikan Alu-alu',
+            'Pomfret': 'Ikan Bawal',
+            'Skipjack': 'Ikan Cakalang',
+            'Yellowfin': 'Ikan Tuna Sirip Kuning',
+            'Mahi-mahi': 'Ikan Lemadang',
+            'Swordfish': 'Ikan Todak'
+        }
         
     def scan_classes(self):
         """Scan untuk mendapatkan semua nama kelas"""
@@ -27,19 +75,27 @@ class FishDatasetConverter:
         if not train_dir.exists():
             raise FileNotFoundError(f"Train directory tidak ditemukan: {train_dir}")
         
-        classes = []
+        classes_english = []
+        classes_indonesian = []
+        
         for class_dir in sorted(train_dir.iterdir()):
             if class_dir.is_dir():
-                classes.append(class_dir.name)
+                english_name = class_dir.name
+                # Convert ke bahasa Indonesia
+                indonesian_name = self.fish_name_mapping.get(english_name, english_name)
+                
+                classes_english.append(english_name)
+                classes_indonesian.append(indonesian_name)
         
-        self.class_names = classes
-        self.class_to_id = {name: idx for idx, name in enumerate(classes)}
+        self.class_names = classes_english  # Keep English for folder scanning
+        self.class_names_indonesian = classes_indonesian  # Indonesian for labels
+        self.class_to_id = {name: idx for idx, name in enumerate(classes_english)}
         
-        print(f"✅ Ditemukan {len(classes)} kelas:")
-        for idx, name in enumerate(classes):
-            print(f"  {idx}: {name}")
+        print(f"✅ Ditemukan {len(classes_english)} kelas:")
+        for idx, (eng, ind) in enumerate(zip(classes_english, classes_indonesian)):
+            print(f"  {idx}: {eng} → {ind}")
         
-        return classes
+        return classes_english
     
     def convert_classification_to_detection(self):
         """Convert classification dataset ke detection format"""
@@ -135,7 +191,9 @@ class FishDatasetConverter:
                 total_split = sum(stats[split].values())
                 print(f"  {split}: {total_split} images")
                 for class_name, count in sorted(stats[split].items()):
-                    print(f"    {class_name}: {count}")
+                    # Convert class name to Indonesian
+                    indonesian_name = self.fish_name_mapping.get(class_name, class_name)
+                    print(f"    {indonesian_name} ({class_name}): {count}")
         
         return stats
     
@@ -146,8 +204,8 @@ class FishDatasetConverter:
             'train': 'train/images',
             'val': 'val/images',
             'test': 'test/images',
-            'nc': len(self.class_names),
-            'names': self.class_names
+            'nc': len(self.class_names_indonesian),
+            'names': self.class_names_indonesian  # Menggunakan nama Indonesia
         }
         
         yaml_path = self.output_path / 'data.yaml'
@@ -155,8 +213,8 @@ class FishDatasetConverter:
             yaml.dump(data_config, f, default_flow_style=False, allow_unicode=True)
         
         print(f"✅ data.yaml created: {yaml_path}")
-        print(f"   Classes: {len(self.class_names)}")
-        print(f"   Names: {self.class_names[:5]}..." if len(self.class_names) > 5 else f"   Names: {self.class_names}")
+        print(f"   Classes: {len(self.class_names_indonesian)}")
+        print(f"   Names (ID): {self.class_names_indonesian[:5]}..." if len(self.class_names_indonesian) > 5 else f"   Names (ID): {self.class_names_indonesian}")
         
         return str(yaml_path)
     
