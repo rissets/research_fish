@@ -311,8 +311,8 @@ def main():
     print("=" * 70)
     
     # Paths
-    source_path = "/mnt/arch-data/data/research_od/datasets/fish_dataset/FishImgDataset"
-    output_path = "/mnt/arch-data/data/research_od/datasets/fish_dataset_yolo"
+    source_path = "/home/adminixtrator/research/fish_engine_be/research_fish/datasets/fish_dataset/FishImgDataset"
+    output_path = "/home/adminixtrator/research/fish_engine_be/research_fish/datasets/fish_dataset_yolo"
     
     # Initialize converter
     converter = FishDatasetConverter(source_path, output_path)
