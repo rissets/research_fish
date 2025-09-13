@@ -44,16 +44,21 @@ class FishDatasetDownloader:
             
             # Dataset fish species yang populer di Kaggle
             datasets = [
-                {
-                    "name": "markdaniellampa/fish-dataset",
-                    "folder": "fish_dataset",
-                    "description": "Fish Species Dataset"
-                },
                 # {
-                #     "name": "crowww/a-large-scale-fish-dataset",
-                #     "folder": "fish_large_scale",
-                #     "description": "Large Scale Fish Dataset"
+                #     "name": "markdaniellampa/fish-dataset",
+                #     "folder": "fish_dataset",
+                #     "description": "Fish Species Dataset"
                 # },
+                {
+                    "name": "sripaadsrinivasan/fish-species-image-data",
+                    "folder": "fish_species_images",
+                    "description": "Fish Species Image Data"
+                },
+                {
+                    "name": "crowww/a-large-scale-fish-dataset",
+                    "folder": "fish_large_scale",
+                    "description": "Large Scale Fish Dataset"
+                },
                 # {
                 #     "name": "sriramr/2020-fish-object-detection-dataset",
                 #     "folder": "fish_detection_2020", 

@@ -6,6 +6,6 @@ researchs/fish-pYTORCH-11/*
 researchs/Fish-Species-Classification-1/*
 datasets/*
 /datasets/*
-training_results/*
+# training_results/*
 yolo11n.pt
 yolov8n-seg.pt

@@ -114,7 +114,7 @@ def start_training():
     
     # Set parameters based on choice
     if train_choice == 1:
-        epochs, batch = 50, 8
+        epochs, batch = 20, 8
     elif train_choice == 2:
         epochs, batch = 100, 16
     elif train_choice == 3:
@@ -128,14 +128,15 @@ def start_training():
     
     # Start training
     cmd = [
-        sys.executable, "train_fish_detection.py",  # Changed from segmentation to detection
+        sys.executable, "train_fish_detection.py",
         "--data", selected_dataset['path'],
         "--epochs", str(epochs),
         "--batch", str(batch),
-        "--img", "640",  # image size
-        "--weights", "yolov8n.pt",  # use YOLOv8 nano detection model
-        "--task", "detect",  # specify detection task
-        "--validate",
+        "--imgsz", "640",  # image size
+        "--model", "yolov8n.pt",  # use YOLOv8 nano detection model for detection
+        "--device", "auto",  # automatically select best device
+        "--patience", "30",  # early stopping patience
+        "--validate"  # run validation after training
     ]
     
     print(f"\n🎯 Training command: {' '.join(cmd)}")
