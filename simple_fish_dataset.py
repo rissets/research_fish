@@ -39,10 +39,10 @@ class SimpleFishDatasetDownloader:
         }
     
     def create_sample_dataset(self):
-        """Create a small sample dataset for testing"""
-        print("🔧 Creating sample fish dataset...")
+        """Create a small sample dataset for object detection testing"""
+        print("🔧 Creating sample fish object detection dataset...")
         
-        sample_dir = self.base_dir / "fish_sample"
+        sample_dir = self.base_dir / "fish_sample_detection"
         sample_dir.mkdir(exist_ok=True)
         
         # Create directory structure
@@ -50,17 +50,17 @@ class SimpleFishDatasetDownloader:
             (sample_dir / split / 'images').mkdir(parents=True, exist_ok=True)
             (sample_dir / split / 'labels').mkdir(parents=True, exist_ok=True)
         
-        # Create sample images with different fish species
-        fish_species = [
-            {'name': 'tuna', 'color': (255, 100, 100), 'shape': 'oval'},
-            {'name': 'salmon', 'color': (255, 180, 120), 'shape': 'elongated'},
-            {'name': 'cod', 'color': (200, 200, 255), 'shape': 'round'},
-            {'name': 'bass', 'color': (100, 255, 100), 'shape': 'angular'},
-            {'name': 'trout', 'color': (255, 255, 100), 'shape': 'streamlined'},
-            {'name': 'mackerel', 'color': (100, 200, 255), 'shape': 'striped'},
-            {'name': 'snapper', 'color': (255, 150, 150), 'shape': 'compact'},
-            {'name': 'grouper', 'color': (150, 150, 200), 'shape': 'bulky'}
+        # Create sample images (colored rectangles representing fish)
+        colors = [
+            (255, 0, 0),    # Red fish - Tuna
+            (0, 255, 0),    # Green fish - Salmon
+            (0, 0, 255),    # Blue fish - Cod
+            (255, 255, 0),  # Yellow fish - Bass
+            (255, 0, 255),  # Magenta fish - Trout
         ]
+        
+        fish_types = ['tuna', 'salmon', 'cod', 'bass', 'trout']
+        fish_names_id = ['tuna', 'salmon', 'kod', 'bass', 'trout']
         
         # Generate sample images and labels
         for split_idx, split in enumerate(['train', 'val', 'test']):
@@ -94,15 +94,14 @@ class SimpleFishDatasetDownloader:
                               (min(255, color[0]+50), min(255, color[1]+50), min(255, color[2]+50)), -1)
                     img = cv2.addWeighted(img, 0.7, overlay, 0.3, 0)
                     
-                    # Create YOLO format label (normalized coordinates)
+                    # Create YOLO format label for object detection (normalized coordinates)
                     center_x = x / 640
                     center_y = y / 640
                     norm_width = width / 640
                     norm_height = height / 640
                     
-                    # For segmentation, we'll create a simple bounding box
-                    # In real segmentation, this would be polygon points
-                    label_lines.append(f"0 {center_x:.6f} {center_y:.6f} {norm_width:.6f} {norm_height:.6f}")
+                    # YOLO format: class_id center_x center_y width height
+                    label_lines.append(f"{fish_type} {center_x:.6f} {center_y:.6f} {norm_width:.6f} {norm_height:.6f}")
                 
                 # Save image
                 img_path = sample_dir / split / 'images' / f'fish_{split}_{i:03d}.jpg'
@@ -113,23 +112,24 @@ class SimpleFishDatasetDownloader:
                 with open(label_path, 'w') as f:
                     f.write('\n'.join(label_lines))
         
-        # Create data.yaml
+        # Create data.yaml for object detection
         data_yaml = {
             'path': str(sample_dir),
             'train': 'train/images',
             'val': 'val/images', 
             'test': 'test/images',
-            'nc': 1,
-            'names': ['fish']
+            'nc': len(fish_types),
+            'names': fish_names_id  # Use Indonesian names
         }
         
         with open(sample_dir / 'data.yaml', 'w') as f:
             yaml.dump(data_yaml, f, default_flow_style=False)
         
-        print(f"✅ Sample dataset created at: {sample_dir}")
+        print(f"✅ Sample object detection dataset created at: {sample_dir}")
         print(f"   Train images: 20")
         print(f"   Val images: 8") 
         print(f"   Test images: 5")
+        print(f"   Classes: {len(fish_types)} ({', '.join(fish_names_id)})")
         
         return str(sample_dir / 'data.yaml')
     
@@ -183,8 +183,8 @@ class SimpleFishDatasetDownloader:
             print(f"❌ Failed to download {dataset_name}: {e}")
             return None
     
-    def convert_to_yolo_segmentation(self, dataset_path):
-        """Convert downloaded dataset to YOLO segmentation format"""
+    def convert_to_yolo_detection(self, dataset_path):
+        """Convert downloaded dataset to YOLO object detection format"""
         dataset_path = Path(dataset_path)
         
         # Look for images in the dataset
@@ -227,7 +227,7 @@ class SimpleFishDatasetDownloader:
                 new_img_path = yolo_dir / split / 'images' / img_path.name
                 shutil.copy2(img_path, new_img_path)
                 
-                # Create dummy label (since we don't have ground truth)
+                # Create dummy label for object detection
                 # In real scenario, you'd convert existing annotations
                 label_path = yolo_dir / split / 'labels' / (img_path.stem + '.txt')
                 
@@ -236,20 +236,20 @@ class SimpleFishDatasetDownloader:
                 with open(label_path, 'w') as f:
                     f.write("0 0.5 0.5 0.8 0.6")  # class_id center_x center_y width height
         
-        # Create data.yaml
+        # Create data.yaml for object detection
         data_yaml = {
             'path': str(yolo_dir),
             'train': 'train/images',
             'val': 'val/images',
             'test': 'test/images', 
             'nc': 1,
-            'names': ['fish']
+            'names': ['ikan']  # Indonesian name
         }
         
         with open(yolo_dir / 'data.yaml', 'w') as f:
             yaml.dump(data_yaml, f, default_flow_style=False)
         
-        print(f"✅ YOLO format dataset created: {yolo_dir}")
+        print(f"✅ YOLO object detection format dataset created: {yolo_dir}")
         return str(yolo_dir / 'data.yaml')
     
     def download_all_datasets(self):
@@ -269,8 +269,8 @@ class SimpleFishDatasetDownloader:
             if dataset_info['url']:
                 dataset_path = self.download_from_url(dataset_info['url'], dataset_key)
                 if dataset_path:
-                    # Convert to YOLO format
-                    yolo_config = self.convert_to_yolo_segmentation(dataset_path)
+                    # Convert to YOLO detection format
+                    yolo_config = self.convert_to_yolo_detection(dataset_path)
                     if yolo_config:
                         downloaded.append(yolo_config)
         
@@ -350,7 +350,7 @@ def main():
             else:
                 dataset_path = downloader.download_from_url(dataset_info['url'], dataset_key)
                 if dataset_path:
-                    config = downloader.convert_to_yolo_segmentation(dataset_path)
+                    config = downloader.convert_to_yolo_detection(dataset_path)
             
             if config:
                 print(f"\n🎉 Dataset ready: {config}")

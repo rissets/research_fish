@@ -128,7 +128,7 @@ def start_training():
     
     # Start training
     cmd = [
-        sys.executable, "train.py",
+        sys.executable, "train_fish_detection.py",  # Changed from segmentation to detection
         "--data", selected_dataset['path'],
         "--epochs", str(epochs),
         "--batch", str(batch),

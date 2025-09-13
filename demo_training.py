@@ -43,7 +43,7 @@ def test_training_pipeline():
     print("\n2. Starting quick training test...")
     try:
         cmd = [
-            sys.executable, "train_fish_segmentation.py",
+            sys.executable, "train_fish_detection.py",  # Changed to detection
             "--data", str(dataset_path),
             "--epochs", "5",  # Very short for testing
             "--batch", "2",   # Small batch
@@ -59,7 +59,7 @@ def test_training_pipeline():
             print("✅ Training test completed successfully")
             
             # Check for output files
-            runs_dir = Path("runs/segment")
+            runs_dir = Path("runs/detect")  # Changed from segment to detect
             if runs_dir.exists():
                 latest_run = max(runs_dir.iterdir(), key=lambda x: x.stat().st_mtime)
                 weights_dir = latest_run / "weights"
@@ -92,7 +92,7 @@ def test_inference():
     print("\n3. Testing inference...")
     
     # Find latest model
-    runs_dir = Path("runs/segment")
+    runs_dir = Path("runs/detect")  # Changed from segment to detect
     if not runs_dir.exists():
         print("❌ No runs directory found")
         return False
@@ -106,7 +106,7 @@ def test_inference():
             return False
         
         # Test inference
-        test_images = Path("./datasets/fish_sample/test/images")
+        test_images = Path("./datasets/fish_sample_detection/test/images")  # Updated path
         if not test_images.exists():
             print(f"❌ Test images not found: {test_images}")
             return False
@@ -149,8 +149,9 @@ def cleanup_test_files():
     """Clean up test files"""
     print("\n4. Cleaning up test files...")
     
+    # Cleanup
     cleanup_paths = [
-        "datasets/fish_sample",
+        "datasets/fish_sample_detection",  # Updated path
         "runs",
         "training_results",
         "test_inference_result.jpg"
