@@ -14,6 +14,9 @@ class UnifiedWebSocketTestView(TemplateView):
 class SegmentationWebSocketTestView(TemplateView):
     template_name = 'ai/test_websocket.html'
 
+class RestAPITestView(TemplateView):
+    template_name = 'ai/test_rest_api.html'
+
 def index(request):
     """Main page for camera detection"""
     return render(request, 'ai/index.html')

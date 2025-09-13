@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import DetectionSession, Detection, DetectedObject
 
 class DetectedObjectSerializer(serializers.ModelSerializer):
@@ -35,6 +36,9 @@ class DetectionSessionSerializer(serializers.ModelSerializer):
         ]
 
 class DetectionSessionCreateSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    session_id = serializers.CharField(required=False)
+    
     class Meta:
         model = DetectionSession
         fields = ['session_id', 'user']

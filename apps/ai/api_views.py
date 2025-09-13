@@ -194,10 +194,18 @@ class PredictionAPIView(APIView):
             return Response({
                 'error': f'Prediction error: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SegmentationModelInfoView(APIView):
+    """API untuk mendapatkan informasi model segmentasi"""
+    permission_classes = [AllowAny]
     
-    @action(detail=False, methods=['get'])
-    def model_info(self, request):
-        """Get information about the YOLO model"""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.yolo_service = YOLOSegmentationService()
+
+    def get(self, request):
+        """Get information about the YOLO segmentation model"""
         try:
             return Response({
                 'model_loaded': self.yolo_service.model is not None,
@@ -289,9 +297,17 @@ class ObjectDetectionAPIView(APIView):
             return Response({
                 'error': f'Object detection error: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class DetectionModelInfoView(APIView):
+    """API untuk mendapatkan informasi model detection"""
+    permission_classes = [AllowAny]
     
-    @action(detail=False, methods=['get'])
-    def model_info(self, request):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.yolo_service = YOLOObjectDetectionService()
+
+    def get(self, request):
         """Get information about the object detection YOLO model"""
         try:
             return Response({

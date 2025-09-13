@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Detection API - REST API Test Interface</title>
+    <!-- Include Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .gradient-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            color: #e5e7eb;
+            border-radius: 8px;
+            border: 1px solid #374151;
+        }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #6366f1 #f3f4f6;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4f46e5;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .hero-bg {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .input-focus:focus {
+            ring: 2px solid #6366f1;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #059669;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+        
+        /* Custom animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .animate-fadeInUp:nth-child(2) { animation-delay: 0.1s; }
+        .animate-fadeInUp:nth-child(3) { animation-delay: 0.2s; }
+        .animate-fadeInUp:nth-child(4) { animation-delay: 0.3s; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .text-6xl {
+                font-size: 2.5rem;
+            }
+            
+            .text-3xl {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* File upload area styling */
+        .file-upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(247, 250, 252, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .animate-pulse-slow {
+            animation: pulse 2s infinite;
+        }
+        
+        .animate-spin-slow {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Custom glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        /* Custom gradient backgrounds */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        /* Enhanced code display */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Enhanced button styles */
+        .btn-gradient {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            background: linear-gradient(45deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-success-gradient {
+            background: linear-gradient(45deg, #10b981, #059669);
+        }
+        
+        .btn-success-gradient:hover {
+            background: linear-gradient(45deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-danger-gradient {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+        
+        .btn-danger-gradient:hover {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Image preview styles */
+        .image-preview-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .image-preview-container:hover {
+            transform: scale(1.02);
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .status-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-active::before {
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        
+        .status-inactive::before {
+            background: #6b7280;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column;
+            }
+            
+            .mobile-full {
+                width: 100%;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .auto-dark {
+                background: #1f2937;
+                color: #f9fafb;
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation Header -->
+    <nav class="glass p-4 mb-8">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-fish text-2xl text-white"></i>
+                <h1 class="text-2xl font-bold text-white">Fish Detection API</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-4 text-white text-sm">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-clock"></i>
+                    <span id="current-time"></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-server"></i>
+                    <span class="status-indicator status-active">API Online</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 pb-8">
+        <!-- Hero Section -->
+        <div class="text-center mb-12 animate-fadeInUp">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
+                REST API Testing Interface
+            </h2>
+            <p class="text-xl text-blue-100 max-w-3xl mx-auto">
+                Comprehensive testing environment for fish detection and segmentation APIs with real-time feedback and analytics
+            </p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass rounded-xl p-6 text-center text-white">
+                <i class="fas fa-brain text-3xl mb-3 text-blue-300"></i>
+                <div class="text-2xl font-bold" id="model-status">2</div>
+                <div class="text-sm text-blue-100">AI Models Ready</div>
+            </div>
+            <div class="glass rounded-xl p-6 text-center text-white">
+                <i class="fas fa-database text-3xl mb-3 text-green-300"></i>
+                <div class="text-2xl font-bold" id="session-count">0</div>
+                <div class="text-sm text-blue-100">Active Sessions</div>
+            </div>
+            <div class="glass rounded-xl p-6 text-center text-white">
+                <i class="fas fa-chart-line text-3xl mb-3 text-purple-300"></i>
+                <div class="text-2xl font-bold" id="detection-count">0</div>
+                <div class="text-sm text-blue-100">Total Detections</div>
+            </div>
+            <div class="glass rounded-xl p-6 text-center text-white">
+                <i class="fas fa-clock text-3xl mb-3 text-yellow-300"></i>
+                <div class="text-2xl font-bold" id="avg-time">~250ms</div>
+                <div class="text-sm text-blue-100">Avg Response Time</div>
+            </div>
+        </div>
+        <!-- Model Information Section -->
+        <div class="gradient-card rounded-2xl shadow-xl p-8 mb-8 animate-fadeInUp">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-brain text-3xl text-blue-600 mr-4"></i>
+                <h2 class="text-3xl font-bold text-gray-800">Model Information</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-puzzle-piece text-2xl text-purple-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Segmentation Model</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">YOLOv8n-seg for detailed fish analysis with polygon boundaries</p>
+                    <button onclick="getModelInfo('segmentation')" 
+                            class="btn-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Get Model Info
+                    </button>
+                    <div id="segmentation-model-result" class="mt-6 hidden">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Model Details:</h4>
+                            <pre id="segmentation-model-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-crosshairs text-2xl text-green-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Detection Model</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">YOLOv8n for fast fish detection with bounding boxes</p>
+                    <button onclick="getModelInfo('detection')" 
+                            class="btn-success-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Get Model Info
+                    </button>
+                    <div id="detection-model-result" class="mt-6 hidden">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Model Details:</h4>
+                            <pre id="detection-model-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Management Section -->
+        <div class="gradient-card rounded-2xl shadow-xl p-8 mb-8 animate-fadeInUp">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-cogs text-3xl text-indigo-600 mr-4"></i>
+                <h2 class="text-3xl font-bold text-gray-800">Session Management</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-plus text-2xl text-green-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Create New Session</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="session-id-input" class="block text-sm font-medium text-gray-700 mb-2">
+                                Session ID (optional):
+                            </label>
+                            <input type="text" id="session-id-input" 
+                                   placeholder="Leave empty for auto-generated UUID"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                        <button onclick="createSession()" 
+                                class="btn-success-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center">
+                            <i class="fas fa-plus mr-2"></i>
+                            Create Session
+                        </button>
+                    </div>
+                    <div id="create-session-result" class="mt-6 hidden">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-green-800 mb-2 flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Session Created:
+                            </h4>
+                            <pre id="create-session-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-48"></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-list text-2xl text-blue-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">All Sessions</h3>
+                    </div>
+                    <button onclick="getAllSessions()" 
+                            class="btn-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center mb-4">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Load All Sessions
+                    </button>
+                    <div id="sessions-result" class="hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-800 mb-4 flex items-center">
+                                <i class="fas fa-database mr-2"></i>
+                                Available Sessions:
+                            </h4>
+                            <div id="sessions-data" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Session Operations -->
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-tools text-2xl text-orange-600 mr-3"></i>
+                    Session Operations
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label for="session-select" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Session for Operations:
+                        </label>
+                        <select id="session-select" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <option value="">Select a session...</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-wrap gap-3 items-end">
+                        <button onclick="getSessionDetails()" 
+                                class="btn-gradient text-white px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 hover:shadow-lg flex items-center">
+                            <i class="fas fa-info mr-2"></i>
+                            Details
+                        </button>
+                        <button onclick="getSessionDetections()" 
+                                class="btn-gradient text-white px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 hover:shadow-lg flex items-center">
+                            <i class="fas fa-search mr-2"></i>
+                            Detections
+                        </button>
+                        <button onclick="closeSession()" 
+                                class="btn-danger-gradient text-white px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 hover:shadow-lg flex items-center">
+                            <i class="fas fa-times mr-2"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="session-details-result" class="mt-6 hidden">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+                            <i class="fas fa-clipboard-list mr-2"></i>
+                            Session Details:
+                        </h4>
+                        <pre id="session-details-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Upload and Prediction Section -->
+        <div class="gradient-card rounded-2xl shadow-xl p-8 mb-8 animate-fadeInUp">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-camera text-3xl text-purple-600 mr-4"></i>
+                <h2 class="text-3xl font-bold text-gray-800">Image Analysis</h2>
+            </div>
+            
+            <!-- Image Upload -->
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-upload text-2xl text-blue-600 mr-3"></i>
+                    Upload Image
+                </h3>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label for="image-input" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Image File:
+                        </label>
+                        <div class="relative">
+                            <input type="file" id="image-input" accept="image/*" onchange="previewImage(event)"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                        
+                        <div class="mt-4 space-y-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="save-to-db" checked 
+                                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">Save results to database</span>
+                            </label>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label for="prediction-session-id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Session ID for Prediction (optional):
+                            </label>
+                            <input type="text" id="prediction-session-id" 
+                                   placeholder="Use selected session or leave empty"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-center">
+                        <div class="w-full max-w-sm">
+                            <img id="image-preview" class="hidden w-full h-auto rounded-lg shadow-lg border-2 border-gray-200 image-preview-container">
+                            <div id="image-placeholder" class="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                                <div class="text-center">
+                                    <i class="fas fa-image text-4xl mb-2"></i>
+                                    <p>Image preview will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Options -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 relative">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-puzzle-piece text-2xl text-purple-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Fish Segmentation</h3>
+                    </div>
+                    <p class="text-gray-600 mb-6">Detailed fish analysis with polygon boundaries and area measurement for precise identification.</p>
+                    
+                    <button onclick="predictSegmentation()" 
+                            class="w-full btn-gradient text-white px-6 py-4 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Analyze with Segmentation
+                    </button>
+                    
+                    <div class="loading-overlay hidden" id="segmentation-loading">
+                        <div class="text-center">
+                            <div class="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin-slow"></div>
+                            <p class="mt-2 text-sm text-gray-600">Processing segmentation...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="segmentation-result" class="mt-6 hidden">
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2 flex items-center">
+                                <i class="fas fa-chart-area mr-2"></i>
+                                Segmentation Results:
+                            </h4>
+                            <pre id="segmentation-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 relative">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-crosshairs text-2xl text-green-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Fish Detection</h3>
+                    </div>
+                    <p class="text-gray-600 mb-6">Fast fish detection with bounding boxes for single object detection and quick identification.</p>
+                    
+                    <button onclick="predictDetection()" 
+                            class="w-full btn-success-gradient text-white px-6 py-4 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center justify-center">
+                        <i class="fas fa-bullseye mr-2"></i>
+                        Detect Fish Objects
+                    </button>
+                    
+                    <div class="loading-overlay hidden" id="detection-loading">
+                        <div class="text-center">
+                            <div class="inline-block w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin-slow"></div>
+                            <p class="mt-2 text-sm text-gray-600">Processing detection...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="detection-result" class="mt-6 hidden">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-green-800 mb-2 flex items-center">
+                                <i class="fas fa-crosshairs mr-2"></i>
+                                Detection Results:
+                            </h4>
+                            <pre id="detection-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Exploration Section -->
+        <div class="gradient-card rounded-2xl shadow-xl p-8 mb-8 animate-fadeInUp">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-chart-line text-3xl text-green-600 mr-4"></i>
+                <h2 class="text-3xl font-bold text-gray-800">Data Exploration</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-chart-pie text-2xl text-blue-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Detection Statistics</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">Get overall detection statistics and insights</p>
+                    <button onclick="getStatistics()" 
+                            class="w-full btn-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center justify-center">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        Get Statistics
+                    </button>
+                    <div id="statistics-result" class="mt-6 hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-800 mb-2 flex items-center">
+                                <i class="fas fa-analytics mr-2"></i>
+                                Statistics:
+                            </h4>
+                            <pre id="statistics-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-filter text-2xl text-purple-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">Filter Objects</h3>
+                    </div>
+                    <div class="space-y-4 mb-4">
+                        <div>
+                            <label for="filter-session" class="block text-sm font-medium text-gray-700 mb-2">
+                                Filter by Session ID:
+                            </label>
+                            <input type="text" id="filter-session" placeholder="Session ID"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                        <div>
+                            <label for="filter-prediction" class="block text-sm font-medium text-gray-700 mb-2">
+                                Filter by Prediction:
+                            </label>
+                            <input type="text" id="filter-prediction" placeholder="e.g., fish, salmon"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                    </div>
+                    <button onclick="getDetectedObjects()" 
+                            class="w-full btn-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Get Objects
+                    </button>
+                    <div id="objects-result" class="mt-6 hidden">
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2 flex items-center">
+                                <i class="fas fa-list mr-2"></i>
+                                Detected Objects:
+                            </h4>
+                            <pre id="objects-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-history text-2xl text-orange-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">All Detections</h3>
+                    </div>
+                    <div class="mb-4">
+                        <label for="detections-session-filter" class="block text-sm font-medium text-gray-700 mb-2">
+                            Filter by Session ID:
+                        </label>
+                        <input type="text" id="detections-session-filter" placeholder="Session ID"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200">
+                    </div>
+                    <button onclick="getAllDetections()" 
+                            class="w-full btn-gradient text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg flex items-center justify-center">
+                        <i class="fas fa-list-ul mr-2"></i>
+                        Get All Detections
+                    </button>
+                    <div id="all-detections-result" class="mt-6 hidden">
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2 flex items-center">
+                                <i class="fas fa-database mr-2"></i>
+                                All Detections:
+                            </h4>
+                            <pre id="all-detections-data" class="code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Information -->
+        <div class="gradient-card rounded-2xl shadow-xl p-8 mb-8 animate-fadeInUp">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-book text-3xl text-indigo-600 mr-4"></i>
+                <h2 class="text-3xl font-bold text-gray-800">API Documentation</h2>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-code text-2xl text-gray-600 mr-3"></i>
+                    <h3 class="text-xl font-semibold text-gray-800">Available REST API Endpoints</h3>
+                </div>
+                <div class="bg-gray-900 rounded-lg p-6 text-gray-100 font-mono text-sm overflow-x-auto">
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-green-400 font-semibold">Base URL: /api/</div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-blue-400 font-semibold mb-2">Session Management:</div>
+                            <div class="ml-4 space-y-1">
+                                <div><span class="text-yellow-400">POST</span>   /sessions/                    - Create new session</div>
+                                <div><span class="text-green-400">GET</span>    /sessions/                    - Get all sessions</div>
+                                <div><span class="text-green-400">GET</span>    /sessions/{id}/               - Get session details</div>
+                                <div><span class="text-green-400">GET</span>    /sessions/{id}/detections/    - Get session detections</div>
+                                <div><span class="text-yellow-400">POST</span>   /sessions/{id}/close/         - Close session</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-blue-400 font-semibold mb-2">Prediction APIs:</div>
+                            <div class="ml-4 space-y-1">
+                                <div><span class="text-yellow-400">POST</span>   /predict/                     - Fish segmentation analysis</div>
+                                <div><span class="text-green-400">GET</span>    /predict/model_info/          - Get segmentation model info</div>
+                                <div><span class="text-yellow-400">POST</span>   /detect/                      - Fish object detection</div>
+                                <div><span class="text-green-400">GET</span>    /detect/model_info/           - Get detection model info</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-blue-400 font-semibold mb-2">Data APIs:</div>
+                            <div class="ml-4 space-y-1">
+                                <div><span class="text-green-400">GET</span>    /detections/                  - Get all detections (filterable)</div>
+                                <div><span class="text-green-400">GET</span>    /detections/{id}/             - Get detection details</div>
+                                <div><span class="text-green-400">GET</span>    /detections/{id}/detected_objects/ - Get objects for detection</div>
+                                <div><span class="text-green-400">GET</span>    /objects/                     - Get detected objects (filterable)</div>
+                                <div><span class="text-green-400">GET</span>    /objects/{id}/                - Get object details</div>
+                                <div><span class="text-green-400">GET</span>    /objects/statistics/          - Get detection statistics</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-blue-400 font-semibold mb-2">Query Parameters:</div>
+                            <div class="ml-4 space-y-1">
+                                <div>- session_id: Filter by session</div>
+                                <div>- prediction: Filter by prediction class</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentImage = null;
+        
+        // Utility function to display results
+        function displayResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            const dataElement = document.getElementById(elementId.replace('-result', '-data'));
+            
+            if (element && dataElement) {
+                element.classList.remove('hidden');
+                dataElement.textContent = JSON.stringify(data, null, 2);
+                
+                // Update styling based on error state
+                if (isError) {
+                    dataElement.className = 'code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64 border-red-500 bg-red-50 text-red-800';
+                } else {
+                    dataElement.className = 'code-block p-4 text-sm custom-scrollbar overflow-auto max-h-64';
+                }
+            }
+        }
+
+        // Show loading state
+        function showLoading(loadingId) {
+            const loading = document.getElementById(loadingId);
+            if (loading) {
+                loading.classList.remove('hidden');
+            }
+        }
+
+        // Hide loading state
+        function hideLoading(loadingId) {
+            const loading = document.getElementById(loadingId);
+            if (loading) {
+                loading.classList.add('hidden');
+            }
+        }
+        
+        // Image preview function
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('image-preview');
+                    const placeholder = document.getElementById('image-placeholder');
+                    
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    currentImage = e.target.result.split(',')[1]; // Remove data:image prefix
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    resolve(reader.result.split(',')[1]); // Remove data URL prefix
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // API calls
+        async function makeAPICall(url, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (data && method !== 'GET') {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(url, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${result.detail || result.error || 'Unknown error'}`);
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+        
+        // Model Information Functions
+        async function getModelInfo(type) {
+            try {
+                const endpoint = type === 'segmentation' ? '/api/predict/model_info/' : '/api/detect/model_info/';
+                const result = await makeAPICall(endpoint);
+                displayResult(`${type}-model-result`, result);
+            } catch (error) {
+                displayResult(`${type}-model-result`, { error: error.message }, true);
+            }
+        }
+        
+        // Session Management Functions
+        async function createSession() {
+            try {
+                const sessionId = document.getElementById('session-id-input').value.trim();
+                const data = sessionId ? { session_id: sessionId } : {};
+                
+                const result = await makeAPICall('/api/sessions/', 'POST', data);
+                displayResult('create-session-result', result);
+                
+                // Update session selector
+                if (result.session_id) {
+                    updateSessionSelector();
+                }
+            } catch (error) {
+                displayResult('create-session-result', { error: error.message }, true);
+            }
+        }
+        
+        async function getAllSessions() {
+            try {
+                const result = await makeAPICall('/api/sessions/');
+                
+                // Handle both paginated and non-paginated responses
+                const sessions = result.results || result;
+                
+                // Display in custom format
+                const sessionsContainer = document.getElementById('sessions-data');
+                sessionsContainer.innerHTML = '';
+                
+                if (!Array.isArray(sessions) || sessions.length === 0) {
+                    sessionsContainer.innerHTML = '<p>No sessions found.</p>';
+                } else {
+                    sessions.forEach(session => {
+                        const sessionDiv = document.createElement('div');
+                        sessionDiv.className = 'session-item';
+                        sessionDiv.innerHTML = `
+                            <h4>Session: ${session.session_id}</h4>
+                            <div class="session-meta">
+                                <span class="${session.is_active ? 'status-active' : 'status-inactive'}">
+                                    ${session.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                                <br>Created: ${new Date(session.created_at).toLocaleString()}
+                                <br>Updated: ${new Date(session.updated_at).toLocaleString()}
+                            </div>
+                            <button onclick="selectSession('${session.session_id}')" style="font-size: 12px; padding: 5px 10px;">Select</button>
+                        `;
+                        sessionsContainer.appendChild(sessionDiv);
+                    });
+                }
+                
+                document.getElementById('sessions-result').style.display = 'block';
+                updateSessionSelector();
+                
+            } catch (error) {
+                displayResult('sessions-result', { error: error.message }, true);
+            }
+        }
+        
+        function selectSession(sessionId) {
+            document.getElementById('session-select').value = sessionId;
+            document.getElementById('prediction-session-id').value = sessionId;
+        }
+        
+        async function updateSessionSelector() {
+            try {
+                const result = await makeAPICall('/api/sessions/');
+                
+                // Handle both paginated and non-paginated responses
+                const sessions = result.results || result;
+                const selector = document.getElementById('session-select');
+                
+                // Clear existing options except first
+                selector.innerHTML = '<option value="">Select a session...</option>';
+                
+                if (Array.isArray(sessions)) {
+                    sessions.forEach(session => {
+                        const option = document.createElement('option');
+                        option.value = session.session_id;
+                        option.textContent = `${session.session_id} (${session.is_active ? 'Active' : 'Inactive'})`;
+                        selector.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to update session selector:', error);
+            }
+        }
+        
+        async function getSessionDetails() {
+            const sessionId = document.getElementById('session-select').value;
+            if (!sessionId) {
+                alert('Please select a session first');
+                return;
+            }
+            
+            try {
+                const result = await makeAPICall(`/api/sessions/${sessionId}/`);
+                displayResult('session-details-result', result);
+            } catch (error) {
+                displayResult('session-details-result', { error: error.message }, true);
+            }
+        }
+        
+        async function getSessionDetections() {
+            const sessionId = document.getElementById('session-select').value;
+            if (!sessionId) {
+                alert('Please select a session first');
+                return;
+            }
+            
+            try {
+                const result = await makeAPICall(`/api/sessions/${sessionId}/detections/`);
+                displayResult('session-details-result', result);
+            } catch (error) {
+                displayResult('session-details-result', { error: error.message }, true);
+            }
+        }
+        
+        async function closeSession() {
+            const sessionId = document.getElementById('session-select').value;
+            if (!sessionId) {
+                alert('Please select a session first');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to close session ${sessionId}?`)) {
+                return;
+            }
+            
+            try {
+                const result = await makeAPICall(`/api/sessions/${sessionId}/close/`, 'POST');
+                displayResult('session-details-result', result);
+                updateSessionSelector();
+            } catch (error) {
+                displayResult('session-details-result', { error: error.message }, true);
+            }
+        }
+        
+        // Prediction Functions
+        async function predictSegmentation() {
+            if (!currentImage) {
+                alert('Please select an image first');
+                return;
+            }
+            
+            showLoading('segmentation-loading');
+            
+            try {
+                const saveToDb = document.getElementById('save-to-db').checked;
+                const sessionId = document.getElementById('prediction-session-id').value.trim();
+                
+                const data = {
+                    image: currentImage,
+                    save_to_db: saveToDb
+                };
+                
+                if (sessionId) {
+                    data.session_id = sessionId;
+                }
+                
+                const result = await makeAPICall('/api/predict/', 'POST', data);
+                displayResult('segmentation-result', result);
+                
+            } catch (error) {
+                displayResult('segmentation-result', { error: error.message }, true);
+            } finally {
+                hideLoading('segmentation-loading');
+            }
+        }
+        
+        async function predictDetection() {
+            if (!currentImage) {
+                alert('Please select an image first');
+                return;
+            }
+            
+            showLoading('detection-loading');
+            
+            try {
+                const saveToDb = document.getElementById('save-to-db').checked;
+                const sessionId = document.getElementById('prediction-session-id').value.trim();
+                
+                const data = {
+                    image: currentImage,
+                    save_to_db: saveToDb
+                };
+                
+                if (sessionId) {
+                    data.session_id = sessionId;
+                }
+                
+                const result = await makeAPICall('/api/detect/', 'POST', data);
+                displayResult('detection-result', result);
+                
+            } catch (error) {
+                displayResult('detection-result', { error: error.message }, true);
+            } finally {
+                hideLoading('detection-loading');
+            }
+        }
+        
+        // Data Exploration Functions
+        async function getStatistics() {
+            try {
+                const result = await makeAPICall('/api/objects/statistics/');
+                displayResult('statistics-result', result);
+            } catch (error) {
+                displayResult('statistics-result', { error: error.message }, true);
+            }
+        }
+        
+        async function getDetectedObjects() {
+            try {
+                const sessionId = document.getElementById('filter-session').value.trim();
+                const prediction = document.getElementById('filter-prediction').value.trim();
+                
+                let url = '/api/objects/';
+                const params = new URLSearchParams();
+                
+                if (sessionId) params.append('session_id', sessionId);
+                if (prediction) params.append('prediction', prediction);
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+                
+                const result = await makeAPICall(url);
+                displayResult('objects-result', result);
+            } catch (error) {
+                displayResult('objects-result', { error: error.message }, true);
+            }
+        }
+        
+        async function getAllDetections() {
+            try {
+                const sessionId = document.getElementById('detections-session-filter').value.trim();
+                
+                let url = '/api/detections/';
+                if (sessionId) {
+                    url += '?session_id=' + encodeURIComponent(sessionId);
+                }
+                
+                const result = await makeAPICall(url);
+                displayResult('all-detections-result', result);
+            } catch (error) {
+                displayResult('all-detections-result', { error: error.message }, true);
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSessionSelector();
+            console.log('REST API Test Interface loaded');
+        });
+    </script>
+</body>
+</html>

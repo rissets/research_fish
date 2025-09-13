@@ -88,12 +88,12 @@ class YOLOObjectDetectionService:
                 for i, box in enumerate(boxes):
                     # Ambil koordinat kotak (x1, y1, x2, y2)
                     coords = box.xyxy[0].cpu().numpy().astype(int)
-                    x1, y1, x2, y2 = coords
+                    x1, y1, x2, y2 = int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3])
                     
                     # Dapatkan nama kelas dari YOLO
-                    yolo_class_id = int(box.cls)
+                    yolo_class_id = int(box.cls.item())
                     yolo_class_name = self.model.names[yolo_class_id]
-                    confidence = float(box.conf)
+                    confidence = float(box.conf.item())
                     
                     # Simpan deteksi dengan confidence tertinggi
                     if confidence > highest_confidence:
@@ -109,35 +109,35 @@ class YOLOObjectDetectionService:
                         
                         # Hitung persentase area dari total frame
                         total_frame_pixels = frame.shape[0] * frame.shape[1]
-                        bbox_area_percentage = (bounding_area / total_frame_pixels) * 100
+                        bbox_area_percentage = float((bounding_area / total_frame_pixels) * 100)
                         
                         # Buat data untuk objek terbaik
                         best_detection = {
                             "object_id": 1,  # Single object, so ID is always 1
                             "prediction": yolo_class_name,
-                            "class_id": yolo_class_id,
-                            "confidence": confidence,
+                            "class_id": int(yolo_class_id),
+                            "confidence": float(confidence),
                             "detection_type": "detection",
                             "bounding_box": {
-                                "area_pixels": bounding_area,
-                                "area_percentage": bbox_area_percentage,
-                                "coordinates_pixel": [x1, y1, x2, y2],
-                                "yolo_format": [yolo_class_id, bbox_x_center_norm, bbox_y_center_norm, bbox_width_norm, bbox_height_norm],
-                                "size_pixels": [bbox_width, bbox_height]
+                                "area_pixels": int(bounding_area),
+                                "area_percentage": float(bbox_area_percentage),
+                                "coordinates_pixel": [int(x1), int(y1), int(x2), int(y2)],
+                                "yolo_format": [int(yolo_class_id), float(bbox_x_center_norm), float(bbox_y_center_norm), float(bbox_width_norm), float(bbox_height_norm)],
+                                "size_pixels": [int(bbox_width), int(bbox_height)]
                             }
                         }
         
         if best_detection is None:
             return {
-                "frame_number": frame_number,
-                "frame_size": [frame.shape[1], frame.shape[0]],
+                "frame_number": int(frame_number),
+                "frame_size": [int(frame.shape[1]), int(frame.shape[0])],
                 "detection": None,
                 "message": "No objects detected"
             }
         
         return {
-            "frame_number": frame_number,
-            "frame_size": [frame.shape[1], frame.shape[0]],
+            "frame_number": int(frame_number),
+            "frame_size": [int(frame.shape[1]), int(frame.shape[0])],
             "detection": best_detection
         }
 
@@ -295,9 +295,9 @@ class YOLOSegmentationService:
                     x1, y1, x2, y2 = coords
                     
                     # Dapatkan nama kelas dari YOLO
-                    yolo_class_id = int(box.cls)
+                    yolo_class_id = int(box.cls.item())
                     yolo_class_name = self.model.names[yolo_class_id]
-                    confidence = float(box.conf)
+                    confidence = float(box.conf.item())
                     
                     # Hitung area segmentasi
                     segmentation_area = self.calculate_segmentation_area(mask)
@@ -329,32 +329,32 @@ class YOLOSegmentationService:
                     
                     # Buat data untuk objek ini
                     object_data = {
-                        "object_id": i + 1,
+                        "object_id": int(i + 1),
                         "prediction": yolo_class_name,
-                        "class_id": yolo_class_id,
-                        "confidence": confidence,
+                        "class_id": int(yolo_class_id),
+                        "confidence": float(confidence),
                         "segmentation": {
-                            "area_pixels": segmentation_area,
-                            "area_percentage": seg_area_percentage,
+                            "area_pixels": int(segmentation_area),
+                            "area_percentage": float(seg_area_percentage),
                             "polygons": segmentation_polygons,
-                            "bounding_coordinates_pixel": [seg_x1, seg_y1, seg_x2, seg_y2],
-                            "yolo_format": [yolo_class_id, seg_x_center_norm, seg_y_center_norm, seg_width_norm, seg_height_norm],
-                            "size_pixels": [seg_width, seg_height]
+                            "bounding_coordinates_pixel": [int(seg_x1), int(seg_y1), int(seg_x2), int(seg_y2)],
+                            "yolo_format": [int(yolo_class_id), float(seg_x_center_norm), float(seg_y_center_norm), float(seg_width_norm), float(seg_height_norm)],
+                            "size_pixels": [int(seg_width), int(seg_height)]
                         },
                         "bounding_box": {
-                            "area_pixels": bounding_area,
-                            "area_percentage": bbox_area_percentage,
-                            "coordinates_pixel": [x1, y1, x2, y2],
-                            "yolo_format": [yolo_class_id, bbox_x_center_norm, bbox_y_center_norm, bbox_width_norm, bbox_height_norm],
-                            "size_pixels": [bbox_width, bbox_height]
+                            "area_pixels": int(bounding_area),
+                            "area_percentage": float(bbox_area_percentage),
+                            "coordinates_pixel": [int(x1), int(y1), int(x2), int(y2)],
+                            "yolo_format": [int(yolo_class_id), float(bbox_x_center_norm), float(bbox_y_center_norm), float(bbox_width_norm), float(bbox_height_norm)],
+                            "size_pixels": [int(bbox_width), int(bbox_height)]
                         },
-                        "segmentation_bbox_ratio": segmentation_ratio
+                        "segmentation_bbox_ratio": float(segmentation_ratio)
                     }
                     
                     detections.append(object_data)
         
         return {
-            "frame_number": frame_number,
-            "frame_size": [frame_width, frame_height],
+            "frame_number": int(frame_number),
+            "frame_size": [int(frame_width), int(frame_height)],
             "detections": detections
         }
