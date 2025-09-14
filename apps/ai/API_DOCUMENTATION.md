@@ -46,8 +46,11 @@ This API provides advanced fish detection and segmentation capabilities using YO
 ### Detection Model  
 - **Type**: YOLOv8n (Custom Trained)
 - **Purpose**: Fast fish detection with bounding boxes
-- **Output**: Single object detection with highest confidence
-- **Use Case**: Real-time counting, quick identification, live streams
+- **Output**: Single or multiple object detection with configurable modes
+- **Detection Modes**:
+  - **Single Mode**: Returns one object with highest confidence
+  - **Multi Mode**: Returns all detected objects above confidence threshold
+- **Use Case**: Real-time counting, quick identification, live streams, multi-fish analysis
 
 ## Data Models
 
@@ -96,10 +99,92 @@ async function detectFish(imageFile) {
 ```
 
 ### WebSocket Real-time Processing
+
+#### Basic Connection
 ```javascript
-// Connect to real-time detection
+// Connect to unified real-time detection
 const socket = new WebSocket(`ws://localhost:8000/ws/ai/unified/session-123/`);
 
+// Listen for connection confirmation
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'connection_established') {
+        console.log('Connected to Unified YOLO Service');
+        console.log('Current mode:', data.current_mode);
+        console.log('Detection mode:', data.detection_mode);
+        console.log('Available modes:', data.available_modes);
+        console.log('Available detection modes:', data.available_detection_modes);
+    }
+};
+```
+
+#### Mode Switching
+```javascript
+// Switch to object detection mode
+socket.send(JSON.stringify({
+    type: 'change_mode',
+    mode: 'detection'
+}));
+
+// Switch detection mode to multi-object
+socket.send(JSON.stringify({
+    type: 'change_detection_mode',
+    detection_mode: 'multi'  // or 'single'
+}));
+```
+
+#### Single Object Detection
+```javascript
+// Send image for single object detection
+socket.send(JSON.stringify({
+    type: 'predict_object_detection',
+    image: base64ImageData,
+    confidence_threshold: 0.7  // 70% confidence threshold
+}));
+
+// Handle single object result
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'prediction_result' && data.detection_mode === 'single') {
+        const detection = data.result.detection;
+        if (detection) {
+            console.log('Fish detected:', detection.prediction);
+            console.log('Confidence:', detection.confidence);
+            console.log('Bounding box:', detection.bounding_box.coordinates_pixel);
+        }
+    }
+};
+```
+
+#### Multi Object Detection
+```javascript
+// Send image for multi object detection
+socket.send(JSON.stringify({
+    type: 'predict_object_detection',
+    image: base64ImageData,
+    confidence_threshold: 0.5  // 50% minimum confidence for multi-object
+}));
+
+// Handle multi object results
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'prediction_result' && data.detection_mode === 'multi') {
+        const detections = data.result.detections;
+        const count = data.result.count;
+        
+        console.log(`Found ${count} fish:`);
+        detections.forEach((detection, index) => {
+            console.log(`Fish ${index + 1}:`, detection.prediction);
+            console.log('Confidence:', detection.confidence);
+            console.log('Bounding box:', detection.bounding_box.coordinates_pixel);
+        });
+    }
+};
+```
+
+#### Segmentation Mode
+```javascript
+// Send image for segmentation
 socket.send(JSON.stringify({
     type: 'predict_segmentation',
     image: base64ImageData
@@ -107,7 +192,7 @@ socket.send(JSON.stringify({
 
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    if (data.type === 'prediction_result') {
+    if (data.type === 'prediction_result' && data.mode === 'segmentation') {
         displayDetections(data.result.detections);
     }
 };
@@ -129,6 +214,105 @@ socket.onmessage = (event) => {
 - **Memory**: ~1-2GB for model loading
 - **CPU**: Efficient inference on CPU or GPU
 - **Storage**: Optional database persistence for results
+
+## Response Formats
+
+### Single Object Detection Response
+```json
+{
+  "type": "prediction_result",
+  "mode": "detection",
+  "detection_mode": "single",
+  "result": {
+    "frame_number": 1,
+    "frame_size": [1920, 1080],
+    "detection": {
+      "object_id": 1,
+      "prediction": "fish",
+      "class_id": 0,
+      "confidence": 0.85,
+      "detection_type": "detection",
+      "bounding_box": {
+        "area_pixels": 50400,
+        "area_percentage": 2.43,
+        "coordinates_pixel": [100, 200, 400, 500],
+        "yolo_format": [0, 0.3125, 0.3241, 0.15625, 0.2778],
+        "size_pixels": [300, 300]
+      }
+    }
+  },
+  "detection_id": 123,
+  "session_id": "session-123"
+}
+```
+
+### Multi Object Detection Response
+```json
+{
+  "type": "prediction_result",
+  "mode": "detection", 
+  "detection_mode": "multi",
+  "result": {
+    "frame_number": 1,
+    "frame_size": [1920, 1080],
+    "detections": [
+      {
+        "object_id": 1,
+        "prediction": "fish",
+        "class_id": 0,
+        "confidence": 0.85,
+        "detection_type": "detection",
+        "bounding_box": {
+          "area_pixels": 50400,
+          "area_percentage": 2.43,
+          "coordinates_pixel": [100, 200, 400, 500],
+          "yolo_format": [0, 0.3125, 0.3241, 0.15625, 0.2778],
+          "size_pixels": [300, 300]
+        }
+      },
+      {
+        "object_id": 2,
+        "prediction": "fish",
+        "class_id": 0,
+        "confidence": 0.72,
+        "detection_type": "detection",
+        "bounding_box": {
+          "area_pixels": 30000,
+          "area_percentage": 1.45,
+          "coordinates_pixel": [500, 300, 700, 450],
+          "yolo_format": [0, 0.625, 0.3472, 0.1042, 0.1389],
+          "size_pixels": [200, 150]
+        }
+      }
+    ],
+    "count": 2
+  },
+  "detection_id": 124,
+  "session_id": "session-123"
+}
+```
+
+### Mode Change Response
+```json
+{
+  "type": "detection_mode_changed",
+  "detection_mode": "multi",
+  "message": "Detection mode changed to multi"
+}
+```
+
+### Connection Established Response
+```json
+{
+  "type": "connection_established",
+  "session_id": "session-123",
+  "current_mode": "segmentation",
+  "detection_mode": "single",
+  "available_modes": ["segmentation", "detection"],
+  "available_detection_modes": ["single", "multi"],
+  "message": "Connected to Unified YOLO Prediction Service"
+}
+```
 
 ## Error Handling
 
