@@ -22,7 +22,7 @@ django-channels==0.7.0
 django-cors-headers==4.8.0
 djangorestframework==3.16.1
 executing==2.2.0
-filelock==3.19.1
+filelock==3.20.1
 filetype==1.2.0
 flasgger==0.9.7.1
 Flask==3.1.2
