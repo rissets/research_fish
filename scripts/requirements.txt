@@ -125,7 +125,7 @@ typing_extensions==4.14.1
 tzdata==2025.2
 ultralytics==8.3.183
 ultralytics-thop==2.0.16
-urllib3==2.5.0
+urllib3==2.6.3
 vanna==0.7.9
 wcwidth==0.2.13
 Werkzeug==3.1.3
